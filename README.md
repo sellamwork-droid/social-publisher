@@ -35,11 +35,9 @@ Un errore (descrizione mancante, account non collegato, problema di rete) non bl
 |---|---|
 | `BLOTATO_API_KEY` | Blotato → Settings → API |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | contenuto del file JSON del service account Google (Drive API + Sheets API attive) |
-| `DRIVE_INBOX_FOLDER_ID` | ID della cartella `DA MANDARE` (la parte finale del link della cartella) |
-| `DRIVE_PUBLISHED_FOLDER_ID` | ID della cartella `PUBBLICATI` |
 | `SHEET_ID` | (facoltativo) ID del foglio cruscotto con una scheda chiamata `Log` |
 
-Le cartelle `DA MANDARE` e `PUBBLICATI` e il foglio vanno condivisi come **Editor** con l'email del service account.
+Gli ID delle cartelle Drive sono già in `config.yaml` (SOCIAL PUBLISHER). La cartella `SOCIAL PUBLISHER` e il foglio vanno condivisi come **Editor** con l'email del service account.
 
 ## Prove
 

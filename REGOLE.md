@@ -14,7 +14,9 @@ Chat (producono, Power conferma) → Drive `DA MANDARE/AXUX` e `DA MANDARE/VOLWI
 Il sistema non manda comandi alle chat. Pubblica solo pacchetti confermati.
 
 ## 2. Cartelle su Drive (uguali per i due brand)
+Tutto sta in **Il mio Drive → `SOCIAL PUBLISHER`** (https://drive.google.com/drive/folders/16_d9APVUEW4C42TUUd1kcff20L9kOvWy). Non è la vecchia cartella DA MANDARE di AXUX.
 ```
+SOCIAL PUBLISHER/
 DA MANDARE/
   AXUX/<AAAA-MM-GG>/
   VOLWICK/<AAAA-MM-GG>/

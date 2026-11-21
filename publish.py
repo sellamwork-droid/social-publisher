@@ -244,6 +244,9 @@ def main() -> None:
             print(json.dumps(a, ensure_ascii=False))
         return
 
+    drv = cfg.get("drive", {})
+    os.environ.setdefault("DRIVE_INBOX_FOLDER_ID", drv.get("inbox_folder_id") or "")
+    os.environ.setdefault("DRIVE_PUBLISHED_FOLDER_ID", drv.get("published_folder_id") or "")
     needed = ["BLOTATO_API_KEY", "GOOGLE_SERVICE_ACCOUNT_JSON", "DRIVE_INBOX_FOLDER_ID", "DRIVE_PUBLISHED_FOLDER_ID"]
     missing = [n for n in needed if not os.environ.get(n)]
     if not args.local and missing:
