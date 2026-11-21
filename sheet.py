@@ -1,0 +1,127 @@
+"""Cruscotto su Google Sheet: tre schede che si aggiornano da sole a ogni corsa.
+
+- Stato    : una riga per post (chiave nascosta in colonna A), aggiornata sul posto
+             programmato -> pubblicato / FALLITO, con link o motivo.
+- Account  : una riga per account Blotato usato dal sistema, con l'ultimo controllo.
+- Storico  : tutto quello che succede, una riga per evento (solo aggiunte).
+Il cruscotto non deve mai bloccare la pubblicazione: ogni errore qui viene solo scritto nel log.
+"""
+from __future__ import annotations
+
+STATO_COLS = ["Chiave", "Brand", "Giorno uscita", "Account", "Tipo", "File", "Uscita (ora account)",
+              "Uscita (ora Italia)", "Stato", "Aggiornato (ora Italia)", "ID Blotato", "Link / motivo"]
+ACCOUNT_COLS = ["Chiave", "Brand", "Account", "Piattaforma", "ID Blotato", "Stato", "Ultimo controllo (ora Italia)",
+                "Note"]
+STORICO_COLS = ["Quando (ora Italia)", "Brand", "Giorno uscita", "Account", "Tipo", "File", "Uscita (ora Italia)",
+                "Evento", "ID Blotato", "Link / motivo"]
+TABS = {"Stato": STATO_COLS, "Account": ACCOUNT_COLS, "Storico": STORICO_COLS}
+
+
+def _col(n: int) -> str:
+    s = ""
+    while n:
+        n, r = divmod(n - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
+class Dashboard:
+    def __init__(self, sa_info: dict | None, sheet_id: str | None, log=print):
+        self.log = log
+        self.svc = None
+        self.sheet_id = sheet_id
+        self._upserts: dict[str, dict[str, dict]] = {"Stato": {}, "Account": {}}
+        self._storico: list[list] = []
+        if not (sa_info and sheet_id):
+            return
+        try:
+            from google.oauth2 import service_account
+            from googleapiclient.discovery import build
+            creds = service_account.Credentials.from_service_account_info(
+                sa_info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+            self.svc = build("sheets", "v4", credentials=creds, cache_discovery=False)
+            self._ensure_tabs()
+        except Exception as e:
+            self.log(f"(cruscotto non disponibile: {str(e)[:200]})")
+            self.svc = None
+
+    # ---------- struttura
+    def _ensure_tabs(self) -> None:
+        ss = self.svc.spreadsheets()
+        meta = ss.get(spreadsheetId=self.sheet_id, fields="sheets.properties").execute()
+        sheets = {s["properties"]["title"]: s["properties"] for s in meta.get("sheets", [])}
+        reqs = []
+        if "Storico" not in sheets:  # il primo foglio (nato dal CSV) diventa lo Storico
+            first = meta["sheets"][0]["properties"]
+            reqs.append({"updateSheetProperties": {"properties": {"sheetId": first["sheetId"], "title": "Storico"},
+                                                   "fields": "title"}})
+            sheets["Storico"] = first
+        for i, t in enumerate(("Stato", "Account")):
+            if t not in sheets:
+                reqs.append({"addSheet": {"properties": {"title": t, "index": i}}})
+        if reqs:
+            ss.batchUpdate(spreadsheetId=self.sheet_id, body={"requests": reqs}).execute()
+            meta = ss.get(spreadsheetId=self.sheet_id, fields="sheets.properties").execute()
+        props = {s["properties"]["title"]: s["properties"] for s in meta["sheets"]}
+        # intestazioni, grassetto, prima riga bloccata, colonna chiave nascosta
+        data = [{"range": f"{t}!A1:{_col(len(c))}1", "values": [c]} for t, c in TABS.items()]
+        ss.values().batchUpdate(spreadsheetId=self.sheet_id,
+                                body={"valueInputOption": "RAW", "data": data}).execute()
+        fmt = []
+        for t, cols in TABS.items():
+            sid = props[t]["sheetId"]
+            fmt.append({"repeatCell": {"range": {"sheetId": sid, "startRowIndex": 0, "endRowIndex": 1},
+                                       "cell": {"userEnteredFormat": {"textFormat": {"bold": True}}},
+                                       "fields": "userEnteredFormat.textFormat.bold"}})
+            fmt.append({"updateSheetProperties": {"properties": {"sheetId": sid,
+                                                                 "gridProperties": {"frozenRowCount": 1}},
+                                                  "fields": "gridProperties.frozenRowCount"}})
+            if cols[0] == "Chiave":
+                fmt.append({"updateDimensionProperties": {
+                    "range": {"sheetId": sid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+                    "properties": {"hiddenByUser": True}, "fields": "hiddenByUser"}})
+        ss.batchUpdate(spreadsheetId=self.sheet_id, body={"requests": fmt}).execute()
+
+    # ---------- API usata dallo script
+    def upsert(self, tab: str, key: str, **fields) -> None:
+        """Imposta i campi della riga con questa chiave (la crea se non c'è). Si scrive tutto al flush()."""
+        self._upserts[tab].setdefault(key, {}).update({k: v for k, v in fields.items() if v is not None})
+
+    def event(self, row: list) -> None:
+        self._storico.append(row)
+
+    def flush(self) -> None:
+        if not self.svc:
+            return
+        try:
+            ss = self.svc.spreadsheets().values()
+            data, appends = [], {}
+            for tab, rows in self._upserts.items():
+                if not rows:
+                    continue
+                cols = TABS[tab]
+                existing = ss.get(spreadsheetId=self.sheet_id, range=f"{tab}!A:A").execute().get("values", [])
+                index = {r[0]: i + 1 for i, r in enumerate(existing) if r}
+                new = []
+                for key, fields in rows.items():
+                    if key in index:
+                        for name, val in fields.items():
+                            c = cols.index(name) + 1
+                            data.append({"range": f"{tab}!{_col(c)}{index[key]}", "values": [[val]]})
+                    else:
+                        new.append([key] + [fields.get(c, "") for c in cols[1:]])
+                if new:
+                    appends[tab] = new
+            if data:
+                ss.batchUpdate(spreadsheetId=self.sheet_id,
+                               body={"valueInputOption": "USER_ENTERED", "data": data}).execute()
+            for tab, rows in appends.items():
+                ss.append(spreadsheetId=self.sheet_id, range=f"{tab}!A:A", valueInputOption="USER_ENTERED",
+                          insertDataOption="INSERT_ROWS", body={"values": rows}).execute()
+            if self._storico:
+                ss.append(spreadsheetId=self.sheet_id, range="Storico!A:A", valueInputOption="USER_ENTERED",
+                          insertDataOption="INSERT_ROWS", body={"values": self._storico}).execute()
+            self.log(f"Cruscotto aggiornato ({sum(len(r) for r in self._upserts.values())} righe di stato, "
+                     f"{len(self._storico)} eventi).")
+        except Exception as e:
+            self.log(f"(cruscotto non aggiornato: {str(e)[:300]})")

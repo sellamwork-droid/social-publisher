@@ -33,8 +33,14 @@ from blotato import Blotato  # noqa: E402
 from media import cover_jpeg, prepend_cover_frame  # noqa: E402
 from plan import Job, build_jobs, parse_caption  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
+from sheet import Dashboard  # noqa: E402
 
 UTC = timezone.utc
+ROME = ZoneInfo("Europe/Rome")
+
+
+def it_time(dt: datetime) -> str:
+    return dt.astimezone(ROME).strftime("%d/%m/%Y %H:%M")
 DONE = {"programmato", "saltato", "pubblicato", "fallito"}
 
 
@@ -42,30 +48,8 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-class SheetLog:
-    def __init__(self, sa_info: dict | None, sheet_id: str | None):
-        self.svc = None
-        self.sheet_id = sheet_id
-        if sa_info and sheet_id:
-            from google.oauth2 import service_account
-            from googleapiclient.discovery import build
-            creds = service_account.Credentials.from_service_account_info(
-                sa_info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
-            self.svc = build("sheets", "v4", credentials=creds, cache_discovery=False)
-
-    def add(self, row: list) -> None:
-        if not self.svc:
-            return
-        try:
-            self.svc.spreadsheets().values().append(
-                spreadsheetId=self.sheet_id, range="A:J", valueInputOption="USER_ENTERED",
-                body={"values": [row]}).execute()
-        except Exception as e:  # il log non deve mai bloccare la pubblicazione
-            log(f"   (log foglio non riuscito: {e})")
-
-
 class Publisher:
-    def __init__(self, cfg: dict, storage, api: Blotato, sheet: SheetLog, now: datetime):
+    def __init__(self, cfg: dict, storage, api: Blotato, sheet: Dashboard, now: datetime):
         self.cfg, self.storage, self.api, self.sheet, self.now = cfg, storage, api, sheet, now
         self.tmp = Path(tempfile.mkdtemp(prefix="pub_"))
         self._uploads: dict[tuple, str] = {}
@@ -217,9 +201,18 @@ class Publisher:
                 except Exception as e:
                     log(f"   ATTENZIONE: stato non salvato per {job.key} ({e}). Controllare doppioni su Blotato.")
             log(f"   {job.key:<20} {rec['stato']:<12} {rec.get('orario', '')} {rec.get('motivo', '')}")
-            self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, pkg_name, job.account, job.kind,
-                            job.source, rec.get("orario", ""), rec["stato"], rec.get("postSubmissionId", ""),
-                            rec.get("motivo", rec.get("nota", ""))])
+            nome = (acc or {}).get("nome", job.account)
+            uscita_it = (it_time(datetime.strptime(rec["quando"], "%Y%m%d%H%M").replace(tzinfo=UTC))
+                         if rec.get("quando") else "")
+            if not self.api.dry_run:
+                self.sheet.upsert("Stato", f"{brand}|{pkg_name}|{job.key}", Brand=brand, **{
+                    "Giorno uscita": pkg_name, "Account": nome, "Tipo": job.kind, "File": job.source,
+                    "Uscita (ora account)": rec.get("orario", ""), "Uscita (ora Italia)": uscita_it,
+                    "Stato": rec["stato"], "Aggiornato (ora Italia)": it_time(self.now),
+                    "ID Blotato": rec.get("postSubmissionId", ""),
+                    "Link / motivo": rec.get("motivo", rec.get("nota", ""))})
+                self.sheet.event([it_time(self.now), brand, pkg_name, nome, job.kind, job.source, uscita_it,
+                                  rec["stato"], rec.get("postSubmissionId", ""), rec.get("motivo", rec.get("nota", ""))])
 
         if all(state.get(j.key, {}).get("stato") in DONE for j in jobs) and not self.api.dry_run:
             try:
@@ -249,10 +242,21 @@ class Publisher:
                     motivo = f"account {aid} da ricollegare su Blotato ({flags})" if flags else ""
                 if motivo:
                     log(f"[{brand}] {name}: ATTENZIONE {motivo}")
-                    if not self.api.dry_run:
+                if not self.api.dry_run:
+                    if motivo:
                         self.problemi += 1
-                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, "", name, "account", "", "",
-                                        "DA RICOLLEGARE", str(aid), motivo])
+                        self.sheet.event([it_time(self.now), brand, "", acc.get("nome", name), "account", "", "",
+                                          "DA RICOLLEGARE", str(aid), motivo])
+                    self.sheet.upsert("Account", f"{brand}|{name}", Brand=brand, Account=acc.get("nome", name),
+                                      Piattaforma=acc["platform"], **{"ID Blotato": str(aid),
+                                      "Stato": "DA RICOLLEGARE" if motivo else "collegato",
+                                      "Ultimo controllo (ora Italia)": it_time(self.now), "Note": motivo})
+            for name, acc in bcfg["accounts"].items():
+                if not self.api.dry_run and (not acc.get("blotato_id") or acc.get("paused")):
+                    self.sheet.upsert("Account", f"{brand}|{name}", Brand=brand, Account=acc.get("nome", name),
+                                      Piattaforma=acc["platform"], **{"ID Blotato": str(acc.get("blotato_id") or ""),
+                                      "Stato": "in pausa" if acc.get("paused") else "non collegato",
+                                      "Ultimo controllo (ora Italia)": it_time(self.now), "Note": ""})
         log(f"Account Blotato controllati: {len(items)} collegati.")
         if self.api.dry_run:
             for a in items:
@@ -290,14 +294,18 @@ class Publisher:
                     if stato == "published":
                         rec["stato"], changed = "pubblicato", True
                         log(f"[{brand} {name}] {key}: PUBBLICATO {st.get('publicUrl', '')}")
-                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, name, key.split(":")[0], "",
-                                        "", "", "pubblicato", rec["postSubmissionId"], st.get("publicUrl", "")])
+                        self.sheet.upsert("Stato", f"{brand}|{name}|{key}", Stato="pubblicato", **{
+                            "Aggiornato (ora Italia)": it_time(self.now), "Link / motivo": st.get("publicUrl", "")})
+                        self.sheet.event([it_time(self.now), brand, name, key.split(":")[0], "", "", "",
+                                          "pubblicato", rec["postSubmissionId"], st.get("publicUrl", "")])
                     elif stato == "failed":
                         rec["stato"], rec["motivo"], changed = "fallito", (st.get("errorMessage") or "")[:300], True
                         self.problemi += 1
                         log(f"[{brand} {name}] {key}: FALLITO su Blotato: {rec['motivo']}")
-                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, name, key.split(":")[0], "",
-                                        "", "", "FALLITO", rec["postSubmissionId"], rec["motivo"]])
+                        self.sheet.upsert("Stato", f"{brand}|{name}|{key}", Stato="FALLITO", **{
+                            "Aggiornato (ora Italia)": it_time(self.now), "Link / motivo": rec["motivo"]})
+                        self.sheet.event([it_time(self.now), brand, name, key.split(":")[0], "", "", "",
+                                          "FALLITO", rec["postSubmissionId"], rec["motivo"]])
                 if changed:
                     try:
                         self.storage.write_state(ref, state)
@@ -358,7 +366,7 @@ def main() -> None:
         storage = DriveStorage(sa, os.environ["DRIVE_INBOX_FOLDER_ID"], os.environ["DRIVE_PUBLISHED_FOLDER_ID"])
     now = datetime.fromisoformat(args.now).replace(tzinfo=UTC) if args.now else datetime.now(UTC)
     sheet_id = os.environ.get("SHEET_ID") or cfg.get("drive", {}).get("sheet_id")
-    pub = Publisher(cfg, storage, api, SheetLog(None if args.dry_run else sa, sheet_id), now)
+    pub = Publisher(cfg, storage, api, Dashboard(None if args.dry_run else sa, sheet_id, log), now)
     try:
         pub.check_accounts()
     except Exception:
@@ -370,6 +378,7 @@ def main() -> None:
     except Exception:
         log("verifica dei post pubblicati non riuscita:")
         traceback.print_exc()
+    pub.sheet.flush()
     if pub.problemi and not args.dry_run:
         log(f"{pub.problemi} problemi: controlla i messaggi qui sopra.")
         sys.exit(1)
