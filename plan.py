@@ -1,24 +1,26 @@
 """Dal contenuto di un pacchetto ai singoli post da programmare.
 
-Regole (vedi documento del sistema):
-  reelN_IT.mp4        -> Instagram IT (reel)
-  reelN_EN.mp4        -> Instagram USA (reel) + TikTok + YouTube Shorts (se non c'è shortN_EN.mp4)
-  shortN_EN.mp4       -> YouTube Shorts
-  carosello_IT/       -> Instagram IT (carosello)
-  carosello_EN/       -> Instagram USA (carosello) + TikTok (carosello foto)
-  storiaN_IT/EN.(png|jpg|mp4) -> storia Instagram IT / USA (senza link sticker: limite di Meta)
-Ogni media ha una descrizione <nome>.txt e, facoltativa, una copertina <nome>_cover.png/.jpg.
+Struttura su Drive (DA MANDARE):  <BRAND>/<LINGUA>/<TIPO>/<AAAA-MM-GG>/
+  LINGUA = EN | IT        TIPO = REEL | CAROSELLI | STORIE
+  EN/REEL       reelN.mp4  -> Instagram USA + TikTok + YouTube Shorts   (shortN.mp4 = solo YouTube)
+  IT/REEL       reelN.mp4  -> Instagram IT
+  EN/CAROSELLI  01.png ... -> Instagram USA + TikTok (foto)
+  IT/CAROSELLI  01.png ... -> Instagram IT
+  EN|IT/STORIE  storiaN.png/.mp4 -> storia Instagram USA / IT (senza link sticker: limite di Meta)
+Ogni reel ha reelN.txt (descrizione) e reelN_cover.png (copertina, obbligatoria su Instagram).
+Un carosello ha le immagini numerate e un solo .txt con la descrizione.
+I vecchi nomi con _EN/_IT (reel1_EN.mp4) sono accettati: la lingua la decide la cartella.
 """
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
 
+from pathlib import Path
+
 from storage import FileRef
 
-VIDEO_RE = re.compile(r"^(reel|short)(\d+)_(IT|EN)\.(mp4|mov)$", re.I)
 IMG_EXT = (".png", ".jpg", ".jpeg", ".webp")
-STORY_RE = re.compile(r"^storia(\d+)_(IT|EN)\.(png|jpg|jpeg|mp4|mov)$", re.I)
 
 
 @dataclass
@@ -48,69 +50,85 @@ def _caption(files: dict[str, FileRef], *candidates: str) -> FileRef | None:
     return None
 
 
-def _carousel_images(files: dict[str, FileRef], folder: str) -> list[FileRef]:
-    imgs = [f for rel, f in files.items()
-            if rel.startswith(folder + "/") and rel.lower().endswith(IMG_EXT)
-            and "/" not in rel[len(folder) + 1:]]
-    def natural(f):  # 2.png prima di 10.png
-        return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", f.rel)]
-    return sorted(imgs, key=natural)
+
+LANGS = ("EN", "IT")
+TIPI = ("REEL", "CAROSELLI", "STORIE")
+TARGETS = {  # (lingua, tipo) -> account
+    ("EN", "REEL"): ["ig_us", "tiktok", "youtube"], ("IT", "REEL"): ["ig_it"],
+    ("EN", "CAROSELLI"): ["ig_us", "tiktok"], ("IT", "CAROSELLI"): ["ig_it"],
+    ("EN", "STORIE"): ["ig_us"], ("IT", "STORIE"): ["ig_it"],
+}
+_SUFFIX = re.compile(r"_(IT|EN)(?=(_cover)?\.[A-Za-z0-9]+$)", re.I)
+REEL_RE = re.compile(r"^(reel|short)(\d+)\.(mp4|mov)$", re.I)
+STORIA_RE = re.compile(r"^storia(\d+)\.(png|jpg|jpeg|mp4|mov)$", re.I)
 
 
-def build_jobs(files: dict[str, FileRef]) -> list[Job]:
+def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
+    lang, tipo = lang.upper(), tipo.upper()
+    files = {_SUFFIX.sub("", rel): f for rel, f in raw.items()}  # reel1_EN.mp4 -> reel1.mp4
+    accounts = TARGETS.get((lang, tipo), [])
     jobs: list[Job] = []
-    videos = {}  # (tipo, n, lingua) -> FileRef
-    for rel, f in files.items():
-        m = VIDEO_RE.match(rel)
-        if m:
-            videos[(m.group(1).lower(), int(m.group(2)), m.group(3).upper())] = f
 
-    def vjob(key, account, kind, slot, f: FileRef, txt_bases: list[str]):
-        base = f.rel.rsplit(".", 1)[0]
-        cap = _caption(files, *[b + ".txt" for b in txt_bases])
-        j = Job(key, account, kind, slot, [f], cap, _cover(files, base), source=f.rel)
+    def add(key_acc, kind, slot, media, cap, cover=None, source="", needs_cover=False, cap_name=""):
+        j = Job(f"{key_acc}:{slot}", key_acc, kind, slot, media, cap, cover, source=source)
         if not cap:
-            j.problems.append(f"manca la descrizione {base}.txt")
-        if account.startswith("ig_") and not j.cover:
-            j.problems.append(f"manca la copertina {base}_cover.png (obbligatoria su Instagram)")
+            j.problems.append(f"manca la descrizione {cap_name}")
+        if needs_cover and key_acc.startswith("ig_") and not cover:
+            j.problems.append(f"manca la copertina {slot}_cover.png (obbligatoria su Instagram)")
         jobs.append(j)
 
-    for (typ, n, lang), f in sorted(videos.items()):
-        if typ == "reel" and lang == "IT":
-            vjob(f"ig_it:reel{n}", "ig_it", "reel", f"reel{n}", f, [f"reel{n}_IT"])
-        elif typ == "reel" and lang == "EN":
-            vjob(f"ig_us:reel{n}", "ig_us", "reel", f"reel{n}", f, [f"reel{n}_EN"])
-            vjob(f"tiktok:reel{n}", "tiktok", "reel", f"reel{n}", f, [f"reel{n}_EN"])
-            if ("short", n, "EN") not in videos:
-                vjob(f"youtube:short{n}", "youtube", "short", f"short{n}", f, [f"reel{n}_EN"])
-        elif typ == "short" and lang == "EN":
-            vjob(f"youtube:short{n}", "youtube", "short", f"short{n}", f, [f"short{n}_EN", f"reel{n}_EN"])
+    if tipo == "REEL":
+        videos = {}
+        for rel, f in files.items():
+            m = REEL_RE.match(rel)
+            if m:
+                videos[(m.group(1).lower(), int(m.group(2)))] = (rel, f)
+        for (typ, n), (rel, f) in sorted(videos.items()):
+            base = rel.rsplit(".", 1)[0]
+            cap = _caption(files, f"{base}.txt", f"reel{n}.txt")
+            cover = _cover(files, base) or _cover(files, f"reel{n}")
+            for acc in accounts:
+                if typ == "short" and acc != "youtube":
+                    continue
+                if acc == "youtube":
+                    if typ == "reel" and ("short", n) in videos:
+                        continue
+                    add(acc, "short", f"short{n}", [f], cap, cover, raw_name(raw, f), cap_name=f"{base}.txt")
+                else:
+                    add(acc, "reel", f"reel{n}", [f], cap, cover, raw_name(raw, f), True, f"{base}.txt")
 
-    for rel, f in sorted(files.items()):
-        m = STORY_RE.match(rel)
-        if m:
-            n, lang = int(m.group(1)), m.group(2).upper()
-            acc = "ig_it" if lang == "IT" else "ig_us"
-            cap = _caption(files, f"storia{n}_{lang}.txt")
-            jobs.append(Job(f"{acc}:storia{n}", acc, "story", f"storia{n}", [f], cap, source=rel))
+    elif tipo == "CAROSELLI":
+        imgs = sorted([f for rel, f in files.items() if "/" not in rel and rel.lower().endswith(IMG_EXT)
+                       and "_cover" not in rel.lower()],
+                      key=lambda f: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", f.rel)])
+        if imgs:
+            txts = [f for rel, f in files.items() if rel.lower().endswith(".txt")
+                    and Path(rel).stem.lower() != "confermato"]
+            cap = txts[0] if len(txts) == 1 else None
+            for acc in accounts:
+                add(acc, "carousel", "carosello", imgs[:35 if acc == "tiktok" else 10], cap,
+                    source=f"{len(imgs)} immagini", cap_name="(un solo file .txt nella cartella)")
+                j = jobs[-1]
+                if len(txts) > 1:
+                    j.problems.append(f"ci sono {len(txts)} file .txt: ne serve uno solo (la descrizione)")
+                if len(imgs) < 2:
+                    j.problems.append("il carosello ha meno di 2 immagini")
+                if len(imgs) > 10 and acc != "tiktok":
+                    j.problems.append(f"il carosello ha {len(imgs)} immagini: su Instagram massimo 10")
 
-    for lang, targets in (("IT", ["ig_it"]), ("EN", ["ig_us", "tiktok"])):
-        folder = f"carosello_{lang}"
-        imgs = _carousel_images(files, folder)
-        if not imgs:
-            continue
-        cap = _caption(files, f"{folder}/{folder}.txt", f"{folder}.txt")
-        for acc in targets:
-            j = Job(f"{acc}:carosello", acc, "carousel", "carosello", imgs[:10 if acc != "tiktok" else 35], cap,
-                    source=folder + "/")
-            if not cap:
-                j.problems.append(f"manca la descrizione {folder}/{folder}.txt")
-            if len(imgs) < 2:
-                j.problems.append("il carosello ha meno di 2 immagini")
-            if len(imgs) > 10 and acc != "tiktok":
-                j.problems.append(f"il carosello ha {len(imgs)} immagini: su Instagram ne vanno massimo 10")
-            jobs.append(j)
+    elif tipo == "STORIE":
+        for rel, f in sorted(files.items()):
+            m = STORIA_RE.match(rel)
+            if m:
+                n = int(m.group(1))
+                cap = _caption(files, f"storia{n}.txt")
+                for acc in accounts:
+                    jobs.append(Job(f"{acc}:storia{n}", acc, "story", f"storia{n}", [f], cap, source=raw_name(raw, f)))
     return jobs
+
+
+def raw_name(raw: dict[str, FileRef], f: FileRef) -> str:
+    return f.rel
 
 
 def parse_caption(text: str) -> tuple[str, str]:

@@ -143,13 +143,14 @@ class Publisher:
 
     # ---------- pacchetto
     def run_package(self, brand: str, bcfg: dict, pkg_name: str, pkg_ref: str) -> None:
-        pkg_date = date.fromisoformat(pkg_name)
+        lang, tipo, day = pkg_name.split("/")
+        pkg_date = date.fromisoformat(day)
         files = self.storage.list_files(pkg_ref)
         if self.cfg.get("require_confirmation", True) and not any(
                 Path(r).stem.lower() == "confermato" for r in files):
             log(f"[{brand} {pkg_name}] in attesa: manca il file CONFERMATO (non pubblico nulla)")
             return
-        jobs = build_jobs(files)
+        jobs = build_jobs(files, lang, tipo)
         state = self.storage.read_state(pkg_ref)
         if not jobs:
             log(f"[{brand} {pkg_name}] nessun file riconosciuto (controlla i nomi)")
@@ -206,12 +207,12 @@ class Publisher:
                          if rec.get("quando") else "")
             if not self.api.dry_run:
                 self.sheet.upsert("Stato", f"{brand}|{pkg_name}|{job.key}", Brand=brand, **{
-                    "Giorno uscita": pkg_name, "Account": nome, "Tipo": job.kind, "File": job.source,
+                    "Giorno uscita": day, "Account": nome, "Tipo": f"{job.kind} {lang}", "File": f"{lang}/{tipo}/{job.source}",
                     "Uscita (ora account)": rec.get("orario", ""), "Uscita (ora Italia)": uscita_it,
                     "Stato": rec["stato"], "Aggiornato (ora Italia)": it_time(self.now),
                     "ID Blotato": rec.get("postSubmissionId", ""),
                     "Link / motivo": rec.get("motivo", rec.get("nota", ""))})
-                self.sheet.event([it_time(self.now), brand, pkg_name, nome, job.kind, job.source, uscita_it,
+                self.sheet.event([it_time(self.now), brand, day, nome, f"{job.kind} {lang}", f"{lang}/{tipo}/{job.source}", uscita_it,
                                   rec["stato"], rec.get("postSubmissionId", ""), rec.get("motivo", rec.get("nota", ""))])
 
         if all(state.get(j.key, {}).get("stato") in DONE for j in jobs) and not self.api.dry_run:
@@ -273,7 +274,7 @@ class Publisher:
             pk = {**self.storage.published_packages(brand), **self.storage.packages(brand)}
             for name, ref in pk.items():
                 try:
-                    d = date.fromisoformat(name)
+                    d = date.fromisoformat(name.rsplit("/", 1)[-1])
                 except ValueError:
                     continue
                 if not (today - timedelta(days=3) <= d <= today):
@@ -319,12 +320,12 @@ class Publisher:
         for brand, bcfg in self.cfg["brands"].items():
             for name, ref in sorted(self.storage.packages(brand).items()):
                 try:
-                    d = date.fromisoformat(name)
+                    d = date.fromisoformat(name.rsplit("/", 1)[-1])
                 except ValueError:
                     log(f"[{brand}] cartella '{name}' ignorata: il nome deve essere AAAA-MM-GG")
                     continue
                 if d > last:
-                    log(f"[{brand} {name}] fuori finestra (esce il {name}): lo prendo dal {d - timedelta(days=self.cfg.get('lookahead_days', 2))}")
+                    log(f"[{brand} {name}] fuori finestra: lo prendo dal {d - timedelta(days=self.cfg.get('lookahead_days', 2))}")
                     continue
                 try:
                     self.run_package(brand, bcfg, name, ref)

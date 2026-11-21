@@ -5,57 +5,62 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 
 ## 0. Regola n.1 — si pubblica solo ciò che Power conferma
 - La chat mostra a Power video, copertine, descrizioni e caroselli, poi aspetta.
-- Solo quando Power scrive **"confermato"** la chat salva il pacchetto su Drive in `DA MANDARE/<BRAND>/<AAAA-MM-GG>/` e ci aggiunge il file vuoto **`CONFERMATO.txt`**.
-- Senza `CONFERMATO.txt` il sistema non pubblica niente di quel pacchetto. Lo lascia in attesa.
+- Solo quando Power scrive **"confermato"** la chat salva il contenuto su Drive nella sua cartella (vedi sotto) e ci aggiunge il file vuoto **`CONFERMATO.txt`**.
+- Senza `CONFERMATO.txt` il sistema non pubblica niente di quella cartella. La lascia in attesa.
 - Se Power chiede modifiche, la chat corregge e aspetta di nuovo "confermato".
 
 ## 1. Come funziona
-Chat (producono, Power conferma) → Drive `DA MANDARE/AXUX` e `DA MANDARE/VOLWICK` → questo repository (GitHub Actions, ogni 3 ore) → Blotato → Instagram / YouTube (TikTok in pausa).
-Il sistema non manda comandi alle chat. Pubblica solo pacchetti confermati.
+Chat (producono, Power conferma) → Drive `DA MANDARE/<BRAND>/<LINGUA>/<TIPO>/<data>/` → questo repository (GitHub Actions, ogni 3 ore) → Blotato → Instagram / YouTube (TikTok in pausa).
+Il sistema non manda comandi alle chat. Pubblica solo cartelle confermate.
 
 ## 2. Cartelle su Drive (uguali per i due brand)
 Tutto sta in **Il mio Drive → `SOCIAL PUBLISHER`** (https://drive.google.com/drive/folders/16_d9APVUEW4C42TUUd1kcff20L9kOvWy). Non è la vecchia cartella DA MANDARE di AXUX.
+I contenuti nascono **in inglese** (EN = Instagram USA, YouTube, TikTok). L'italiano (IT) è la versione per l'Instagram italiano.
 ```
 SOCIAL PUBLISHER/
-DA MANDARE/
-  AXUX/<AAAA-MM-GG>/
-  VOLWICK/<AAAA-MM-GG>/
-PUBBLICATI/            ← il sistema ci sposta i pacchetti finiti
+  DA MANDARE/
+    AXUX/
+      EN/  REEL/<AAAA-MM-GG>/   CAROSELLI/<AAAA-MM-GG>/
+      IT/  REEL/<AAAA-MM-GG>/   CAROSELLI/<AAAA-MM-GG>/
+    VOLWICK/   (uguale)
+  PUBBLICATI/  (stessa struttura: il sistema ci sposta le cartelle finite)
 ```
-Dentro ogni pacchetto (la data è il giorno di uscita):
-```
-CONFERMATO.txt         ← obbligatorio, solo dopo il "confermato" di Power
-reel1_IT.mp4  reel1_IT.txt  reel1_IT_cover.png
-reel1_EN.mp4  reel1_EN.txt  reel1_EN_cover.png
-reel2_IT.mp4 … reel2_EN.mp4 …
-carosello_IT/01.png 02.png … carosello_IT.txt
-carosello_EN/01.png 02.png … carosello_EN.txt
-short1_EN.mp4 short1_EN.txt short1_EN_cover.png   ← facoltativo, altrimenti su YouTube va reel1_EN
+La data è il **giorno di uscita**. Reel e caroselli si confermano separatamente: ogni cartella-data ha il suo `CONFERMATO.txt`.
 
+**REEL/<data>/**
 ```
-Il sistema prende i pacchetti di oggi e dei 2 giorni dopo. Le altre cartelle già presenti su Drive non vengono toccate.
+reel1.mp4   reel1.txt   reel1_cover.png
+reel2.mp4   reel2.txt   reel2_cover.png
+short1.mp4  short1.txt  short1_cover.png   ← solo EN, facoltativo: altrimenti su YouTube va reel1
+CONFERMATO.txt
+```
+**CAROSELLI/<data>/**
+```
+01.png 02.png 03.png …   (massimo 10)
+descrizione.txt          (un solo .txt)
+CONFERMATO.txt
+```
+Il sistema prende le cartelle di oggi e dei 2 giorni dopo. Le altre cartelle su Drive non vengono toccate. (I vecchi nomi `reel1_EN.mp4` funzionano ancora: la lingua la decide la cartella.)
 
-## 3. Dove va ogni file
-| File | Va su |
+## 3. Dove va ogni cartella
+| Cartella | Va su |
 |---|---|
-| `reelN_IT.mp4` | Instagram italiano |
-| `reelN_EN.mp4` | Instagram USA (.official) + TikTok + YouTube Shorts |
-| `shortN_EN.mp4` | YouTube Shorts al posto di `reelN_EN` |
-| `carosello_IT/` | Instagram italiano |
-| `carosello_EN/` | Instagram USA + TikTok (carosello foto) |
-| `storiaN_IT.png/.jpg/.mp4` | storia Instagram italiano (slot storia1–3) |
-| `storiaN_EN.png/.jpg/.mp4` | storia Instagram USA |
+| `EN/REEL` | Instagram USA (.officiall) + YouTube Shorts + TikTok (in pausa) |
+| `IT/REEL` | Instagram italiano |
+| `EN/CAROSELLI` | Instagram USA + TikTok (carosello foto, in pausa) |
+| `IT/CAROSELLI` | Instagram italiano |
+| `EN/STORIE`, `IT/STORIE` (facoltative, `storia1.png/.mp4`…) | storia Instagram USA / italiano |
 
-Storie: escono in automatico ma **senza link sticker** (Meta non lo permette via API a nessun servizio ufficiale). Per portare traffico: scritta nella storia tipo "Rispondi UNLOCK" + DM automation di Blotato che manda il link.
+Storie: per ora le fa Power a mano. Se si usano le cartelle STORIE escono **senza link sticker** (Meta non lo permette via API).
 
 ## 4. Volume per brand al giorno
 Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (traduzione esatta dell'IT) · TikTok: 2 reel + 1 carosello (in pausa) · YouTube Shorts: 2.
 
 ## 5. File
 - **Video:** verticale 9:16, MP4 H.264 + AAC, 3 s – 3 min. Su TikTok il sistema mette da solo la copertina come primo frame.
-- **Copertina** `<nome>_cover.png/.jpg`: verticale 1080×1920 o 4K. **Obbligatoria per i reel Instagram**: senza copertina il reel IG non esce (errore). Per YouTube e TikTok è facoltativa (YouTube la usa solo se il canale è verificato).
+- **Copertina** `reelN_cover.png/.jpg`: verticale 1080×1920 o 4K. **Obbligatoria per i reel Instagram**: senza copertina il reel IG non esce (errore). Per YouTube e TikTok è facoltativa (YouTube la usa solo se il canale è verificato).
 - **Carosello:** `01.png`, `02.png` … massimo 10 su Instagram, stesso formato (4:5 1080×1350 consigliato). Escono **nell'ordine dei numeri** (anche 1, 2, 10 sono in ordine giusto).
-- **Descrizione** `<nome>.txt` (obbligatoria, lingua dell'account):
+- **Descrizione** `reelN.txt` / `descrizione.txt` (obbligatoria, lingua della cartella):
   - AXUX: `→ axux.com | AXUX5 · 5% OFF` / hook / hashtag
   - VOLWICK: la caption con l'offerta e gli hashtag, come nelle regole di Volwick
   - Riga facoltativa `TITLE: …` = titolo dello Short YouTube (tolta dagli altri social). Senza, il titolo è l'hook.

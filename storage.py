@@ -1,8 +1,9 @@
 """Accesso ai file dei pacchetti: Google Drive (produzione) o cartella locale (test).
 
 Struttura attesa:
-    <root DA MANDARE>/<BRAND>/<AAAA-MM-GG>/...file...
-    <root PUBBLICATI>/<BRAND>/<AAAA-MM-GG>/  (dove vengono spostati i pacchetti finiti)
+    <root DA MANDARE>/<BRAND>/<LINGUA>/<TIPO>/<AAAA-MM-GG>/...file...
+    <root PUBBLICATI>/<BRAND>/<LINGUA>/<TIPO>/<AAAA-MM-GG>/  (pacchetti finiti)
+Un pacchetto si chiama "EN/REEL/2026-11-23": lingua, tipo, giorno di uscita.
 """
 from __future__ import annotations
 
@@ -13,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 STATE_FILE = "_stato.json"
+LANGS = ("EN", "IT")
+TIPI = ("REEL", "CAROSELLI", "STORIE")
 
 
 @dataclass
@@ -27,15 +30,21 @@ class LocalStorage:
         self.inbox = Path(inbox)
         self.published = Path(published)
 
+    @staticmethod
+    def _walk(root: Path) -> dict[str, str]:
+        out = {}
+        for lang in LANGS:
+            for tipo in TIPI:
+                d = root / lang / tipo
+                if d.is_dir():
+                    out.update({f"{lang}/{tipo}/{p.name}": str(p) for p in d.iterdir() if p.is_dir()})
+        return out
+
     def packages(self, brand: str) -> dict[str, str]:
-        d = self.inbox / brand
-        if not d.is_dir():
-            return {}
-        return {p.name: str(p) for p in d.iterdir() if p.is_dir()}
+        return self._walk(self.inbox / brand)
 
     def published_packages(self, brand: str) -> dict[str, str]:
-        d = self.published / brand
-        return {p.name: str(p) for p in d.iterdir() if p.is_dir()} if d.is_dir() else {}
+        return self._walk(self.published / brand)
 
     def list_files(self, pkg_ref: str) -> dict[str, FileRef]:
         root = Path(pkg_ref)
@@ -57,10 +66,10 @@ class LocalStorage:
     def write_state(self, pkg_ref: str, state: dict) -> None:
         (Path(pkg_ref) / STATE_FILE).write_text(json.dumps(state, indent=2, ensure_ascii=False))
 
-    def move_to_published(self, brand: str, date: str, pkg_ref: str) -> None:
-        dest = self.published / brand
+    def move_to_published(self, brand: str, name: str, pkg_ref: str) -> None:
+        dest = self.published / brand / name.rsplit("/", 1)[0]
         dest.mkdir(parents=True, exist_ok=True)
-        shutil.move(pkg_ref, dest / date)
+        shutil.move(pkg_ref, dest / name.rsplit("/", 1)[1])
 
 
 class DriveStorage:
@@ -108,20 +117,29 @@ class DriveStorage:
         return f["id"]
 
     # --- API usata dallo script
-    def packages(self, brand: str) -> dict[str, str]:
-        bid = self._child_folder(self.inbox_id, brand)
-        if not bid:
-            return {}
-        pk = {f["name"]: f["id"] for f in self._children(bid) if f["mimeType"] == self.FOLDER}
+    def _walk(self, root_id: str, brand: str) -> dict[str, str]:
         self._parent = getattr(self, "_parent", {})
-        self._parent.update({ref: bid for ref in pk.values()})
-        return pk
+        out = {}
+        bid = self._child_folder(root_id, brand)
+        if not bid:
+            return out
+        for lf in self._children(bid):
+            if lf["mimeType"] != self.FOLDER or lf["name"].upper() not in LANGS:
+                continue
+            for tf in self._children(lf["id"]):
+                if tf["mimeType"] != self.FOLDER or tf["name"].upper() not in TIPI:
+                    continue
+                for pf in self._children(tf["id"]):
+                    if pf["mimeType"] == self.FOLDER:
+                        out[f"{lf['name'].upper()}/{tf['name'].upper()}/{pf['name']}"] = pf["id"]
+                        self._parent[pf["id"]] = tf["id"]
+        return out
+
+    def packages(self, brand: str) -> dict[str, str]:
+        return self._walk(self.inbox_id, brand)
 
     def published_packages(self, brand: str) -> dict[str, str]:
-        bid = self._child_folder(self.published_id, brand)
-        if not bid:
-            return {}
-        return {f["name"]: f["id"] for f in self._children(bid) if f["mimeType"] == self.FOLDER}
+        return self._walk(self.published_id, brand)
 
     def list_files(self, pkg_ref: str) -> dict[str, FileRef]:
         out: dict[str, FileRef] = {}
@@ -170,11 +188,13 @@ class DriveStorage:
             props[k] = val.encode()[:budget].decode("utf-8", "ignore")
         self.svc.files().update(fileId=pkg_ref, body={"appProperties": props}, supportsAllDrives=True).execute()
 
-    def move_to_published(self, brand: str, date: str, pkg_ref: str) -> None:
+    def move_to_published(self, brand: str, name: str, pkg_ref: str) -> None:
         dest = self._child_folder(self.published_id, brand)
+        for part in name.split("/")[:-1]:  # EN, REEL
+            dest = dest and self._child_folder(dest, part, create=True)
         src = getattr(self, "_parent", {}).get(pkg_ref)
         if not dest or not src:
-            raise RuntimeError(f"cartella PUBBLICATI/{brand} o cartella di origine non trovata")
+            raise RuntimeError(f"cartella PUBBLICATI/{brand}/{name} o cartella di origine non trovata")
         self.svc.files().update(
             fileId=pkg_ref, addParents=dest, removeParents=src,
             fields="id", supportsAllDrives=True,

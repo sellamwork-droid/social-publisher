@@ -7,7 +7,7 @@ Qui sotto il funzionamento tecnico.
 
 `.github/workflows/publisher.yml` avvia `publish.py` ogni 3 ore. Lo script:
 
-1. legge `DA MANDARE/<BRAND>/<AAAA-MM-GG>/` su Drive (oggi e i prossimi `lookahead_days`)
+1. legge `DA MANDARE/<BRAND>/<EN|IT>/<REEL|CAROSELLI|STORIE>/<AAAA-MM-GG>/` su Drive (oggi e i prossimi `lookahead_days`)
 2. per ogni file decide account e slot (`plan.py`)
 3. prepara i media (`media.py`):
    - copertine in JPEG 1080×1920 sotto i 2 MB
