@@ -10,7 +10,7 @@ on:
         type: boolean
         default: true
       simula_data:
-        description: "Solo per la prova: fingi che sia questa data/ora UTC (es. 2026-12-30T08:00:00). Vuoto = adesso"
+        description: "Fingi che sia questa data/ora UTC (es. 2026-12-30T08:00:00): prende i pacchetti di quei giorni. Vuoto = adesso"
         type: string
         default: ""
 
@@ -43,12 +43,9 @@ jobs:
           DRIVE_PUBLISHED_FOLDER_ID: ${{ secrets.DRIVE_PUBLISHED_FOLDER_ID }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            if [ -n "${{ inputs.simula_data }}" ]; then
-              python publish.py --dry-run --now "${{ inputs.simula_data }}"
-            else
-              python publish.py --dry-run
-            fi
-          else
-            python publish.py
+          ARGS=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            [ "${{ inputs.dry_run }}" = "true" ] && ARGS="--dry-run"
+            [ -n "${{ inputs.simula_data }}" ] && ARGS="$ARGS --now ${{ inputs.simula_data }}"
           fi
+          python publish.py $ARGS
