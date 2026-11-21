@@ -135,32 +135,24 @@ class DriveStorage:
                 _, done = dl.next_chunk()
         return dest
 
-    def _state_file_id(self, pkg_ref: str) -> str | None:
-        for f in self._children(pkg_ref):
-            if f["name"] == STATE_FILE:
-                return f["id"]
-        return None
-
+    # Lo stato si salva nelle appProperties della cartella del pacchetto: un service account
+    # non ha spazio su Drive e non può creare file nel Drive di Power, ma può modificare i metadati.
+    # Ogni proprietà è "chiave post" -> "stato|id|nota" (max 124 byte chiave+valore).
     def read_state(self, pkg_ref: str) -> dict:
-        fid = self._state_file_id(pkg_ref)
-        if not fid:
-            return {}
-        data = self.svc.files().get_media(fileId=fid, supportsAllDrives=True).execute()
-        return json.loads(data.decode("utf-8"))
+        meta = self.svc.files().get(fileId=pkg_ref, fields="appProperties", supportsAllDrives=True).execute()
+        out = {}
+        for k, v in (meta.get("appProperties") or {}).items():
+            parts = v.split("|", 2) + ["", ""]
+            out[k] = {"stato": parts[0], "postSubmissionId": parts[1], "motivo": parts[2]}
+        return out
 
     def write_state(self, pkg_ref: str, state: dict) -> None:
-        from googleapiclient.http import MediaIoBaseUpload
-
-        body = io.BytesIO(json.dumps(state, indent=2, ensure_ascii=False).encode("utf-8"))
-        media = MediaIoBaseUpload(body, mimetype="application/json", resumable=False)
-        fid = self._state_file_id(pkg_ref)
-        if fid:
-            self.svc.files().update(fileId=fid, media_body=media, supportsAllDrives=True).execute()
-        else:
-            self.svc.files().create(
-                body={"name": STATE_FILE, "parents": [pkg_ref]},
-                media_body=media, fields="id", supportsAllDrives=True,
-            ).execute()
+        props = {}
+        for k, rec in state.items():
+            val = f"{rec.get('stato', '')}|{rec.get('postSubmissionId') or ''}|{rec.get('motivo') or rec.get('nota') or ''}"
+            budget = 120 - len(k.encode()) - 2
+            props[k] = val.encode()[:budget].decode("utf-8", "ignore")
+        self.svc.files().update(fileId=pkg_ref, body={"appProperties": props}, supportsAllDrives=True).execute()
 
     def move_to_published(self, brand: str, date: str, pkg_ref: str) -> None:
         dest = self._child_folder(self.published_id, brand, create=True)

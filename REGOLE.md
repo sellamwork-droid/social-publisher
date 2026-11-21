@@ -31,7 +31,7 @@ reel2_IT.mp4 … reel2_EN.mp4 …
 carosello_IT/01.png 02.png … carosello_IT.txt
 carosello_EN/01.png 02.png … carosello_EN.txt
 short1_EN.mp4 short1_EN.txt short1_EN_cover.png   ← facoltativo, altrimenti su YouTube va reel1_EN
-_stato.json            ← lo scrive il sistema, non toccarlo
+
 ```
 Il sistema prende i pacchetti di oggi e dei 2 giorni dopo. Le altre cartelle già presenti su Drive non vengono toccate.
 

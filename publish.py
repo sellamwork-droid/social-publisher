@@ -197,7 +197,10 @@ class Publisher:
                 rec["stato"] = "prova:" + rec["stato"]
             else:
                 state[job.key] = rec
-                self.storage.write_state(pkg_ref, state)
+                try:
+                    self.storage.write_state(pkg_ref, state)
+                except Exception as e:
+                    log(f"   ATTENZIONE: stato non salvato per {job.key} ({e}). Controllare doppioni su Blotato.")
             log(f"   {job.key:<20} {rec['stato']:<12} {rec.get('orario', '')} {rec.get('motivo', '')}")
             self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, pkg_name, job.account, job.kind,
                             job.source, rec.get("orario", ""), rec["stato"], rec.get("postSubmissionId", ""),

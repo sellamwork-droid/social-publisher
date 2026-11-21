@@ -13,7 +13,7 @@ Qui sotto il funzionamento tecnico.
    - copertine in JPEG 1080×1920 sotto i 2 MB
    - per TikTok, copertina messa come primo frame del video
 4. carica tutto su Blotato e programma il post all'orario dello slot (`blotato.py`)
-5. scrive lo stato in `_stato.json` dentro il pacchetto (niente doppioni) e una riga nel foglio "Log"
+5. salva lo stato nelle proprietà nascoste della cartella del pacchetto (niente doppioni) e una riga nel foglio "Log"
 6. a pacchetto completo lo sposta in `PUBBLICATI/<BRAND>/`
 
 Un errore (descrizione mancante, account non collegato, problema di rete) non blocca gli altri post. Viene scritto nello stato e nel foglio, e i post in errore vengono riprovati all'ora successiva.
