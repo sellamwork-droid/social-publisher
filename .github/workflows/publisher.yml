@@ -9,6 +9,10 @@ on:
         description: "Solo prova (non carica e non programma nulla)"
         type: boolean
         default: true
+      simula_data:
+        description: "Solo per la prova: fingi che sia questa data/ora UTC (es. 2026-12-30T08:00:00). Vuoto = adesso"
+        type: string
+        default: ""
 
 concurrency:
   group: publisher
@@ -40,7 +44,11 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            python publish.py --dry-run
+            if [ -n "${{ inputs.simula_data }}" ]; then
+              python publish.py --dry-run --now "${{ inputs.simula_data }}"
+            else
+              python publish.py --dry-run
+            fi
           else
             python publish.py
           fi

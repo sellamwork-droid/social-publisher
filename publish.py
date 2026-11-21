@@ -219,6 +219,7 @@ class Publisher:
                     log(f"[{brand}] cartella '{name}' ignorata: il nome deve essere AAAA-MM-GG")
                     continue
                 if d > last:
+                    log(f"[{brand} {name}] fuori finestra (esce il {name}): lo prendo dal {d - timedelta(days=self.cfg.get('lookahead_days', 2))}")
                     continue
                 try:
                     self.run_package(brand, bcfg, name, ref)
