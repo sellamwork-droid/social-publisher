@@ -9,12 +9,19 @@ Il cruscotto non deve mai bloccare la pubblicazione: ogni errore qui viene solo 
 from __future__ import annotations
 
 STATO_COLS = ["Chiave", "Brand", "Giorno uscita", "Account", "Tipo", "File", "Uscita (ora account)",
-              "Uscita (ora Italia)", "Stato", "Aggiornato (ora Italia)", "ID Blotato", "Link / motivo"]
+              "Uscita (ora Italia)", "Stato", "Aggiornato (ora Italia)", "ID Blotato", "Link / motivo",
+              "ID contenuto"]
 ACCOUNT_COLS = ["Chiave", "Brand", "Account", "Piattaforma", "ID Blotato", "Stato", "Ultimo controllo (ora Italia)",
                 "Note"]
 STORICO_COLS = ["Quando (ora Italia)", "Brand", "Giorno uscita", "Account", "Tipo", "File", "Uscita (ora Italia)",
                 "Evento", "ID Blotato", "Link / motivo"]
-TABS = {"Stato": STATO_COLS, "Account": ACCOUNT_COLS, "Storico": STORICO_COLS}
+CALENDARIO_COLS = ["Giorno", "Brand", "EN · reel", "EN · carosello", "IT · reel", "IT · carosello"]
+NUMERI_COLS = ["Chiave", "Brand", "Giorno uscita", "Account", "Tipo", "ID contenuto", "Views", "Like", "Commenti",
+               "Reach", "Condivisioni", "Salvataggi", "Aggiornato (ora Italia)", "Link"]
+CHI_COLS = ["Brand", "Chat", "Sta facendo", "Contenuto", "Ultimo segnale (ora Italia)", "Stato"]
+TABS = {"Calendario": CALENDARIO_COLS, "Stato": STATO_COLS, "Numeri": NUMERI_COLS, "Chi lavora": CHI_COLS,
+        "Account": ACCOUNT_COLS, "Storico": STORICO_COLS}
+REPLACE_TABS = ("Calendario", "Chi lavora")  # riscritte da zero a ogni corsa
 
 
 def _col(n: int) -> str:
@@ -30,7 +37,8 @@ class Dashboard:
         self.log = log
         self.svc = None
         self.sheet_id = sheet_id
-        self._upserts: dict[str, dict[str, dict]] = {"Stato": {}, "Account": {}}
+        self._upserts: dict[str, dict[str, dict]] = {"Stato": {}, "Account": {}, "Numeri": {}}
+        self._replace: dict[str, list[list]] = {}
         self._storico: list[list] = []
         if not (sa_info and sheet_id):
             return
@@ -56,7 +64,7 @@ class Dashboard:
             reqs.append({"updateSheetProperties": {"properties": {"sheetId": first["sheetId"], "title": "Storico"},
                                                    "fields": "title"}})
             sheets["Storico"] = first
-        for i, t in enumerate(("Stato", "Account")):
+        for i, t in enumerate(TABS):
             if t not in sheets:
                 reqs.append({"addSheet": {"properties": {"title": t, "index": i}}})
         if reqs:
@@ -86,6 +94,22 @@ class Dashboard:
     def upsert(self, tab: str, key: str, **fields) -> None:
         """Imposta i campi della riga con questa chiave (la crea se non c'è). Si scrive tutto al flush()."""
         self._upserts[tab].setdefault(key, {}).update({k: v for k, v in fields.items() if v is not None})
+
+    def links(self) -> dict[str, str]:
+        """URL pubblici già trovati dalle verifiche (scheda Stato): url -> chiave."""
+        if not self.svc:
+            return {}
+        try:
+            rows = self.svc.spreadsheets().values().get(spreadsheetId=self.sheet_id,
+                                                        range="Stato!A2:M").execute().get("values", [])
+            i = STATO_COLS.index("Link / motivo")
+            return {r[i].rstrip("/"): r[0] for r in rows if len(r) > i and r[i].startswith("http")}
+        except Exception:
+            return {}
+
+    def replace(self, tab: str, rows: list[list]) -> None:
+        """Riscrive la scheda da zero (sotto l'intestazione) al flush()."""
+        self._replace[tab] = rows
 
     def event(self, row: list) -> None:
         self._storico.append(row)
@@ -117,6 +141,10 @@ class Dashboard:
                 start = max(n, 1) + 1
                 end = start + len(self._storico) - 1
                 data.append({"range": f"Storico!A{start}:{_col(len(STORICO_COLS))}{end}", "values": self._storico})
+            for tab, rows in self._replace.items():
+                ss.clear(spreadsheetId=self.sheet_id, range=f"{tab}!A2:Z").execute()
+                if rows:
+                    data.append({"range": f"{tab}!A2:{_col(len(TABS[tab]))}{len(rows) + 1}", "values": rows})
             if data:
                 ss.batchUpdate(spreadsheetId=self.sheet_id,
                                body={"valueInputOption": "USER_ENTERED", "data": data}).execute()

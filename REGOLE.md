@@ -31,6 +31,7 @@ La data è il **giorno di uscita**. Reel e caroselli si confermano separatamente
 ```
 reel1.mp4   reel1.txt   reel1_cover.png
 reel2.mp4   reel2.txt   reel2_cover.png
+ID.txt                                     ← reel1=A0012 (una riga per reel): lega i post ai numeri
 short1.mp4  short1.txt  short1_cover.png   ← solo EN, facoltativo: altrimenti su YouTube va reel1
 CONFERMATO.txt
 ```
@@ -38,6 +39,7 @@ CONFERMATO.txt
 ```
 01.png 02.png 03.png …   (massimo 10)
 descrizione.txt          (un solo .txt)
+ID.txt                   (l'ID del carosello, es. C0003)
 CONFERMATO.txt
 ```
 Il sistema prende le cartelle di oggi e dei 2 giorni dopo. Le altre cartelle su Drive non vengono toccate. (I vecchi nomi `reel1_EN.mp4` funzionano ancora: la lingua la decide la cartella.)
@@ -83,9 +85,15 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 | TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 | 11:30 · 14:30 · 19:30 |
 | Shorts (New York) | short1 14:00 · short2 19:00 | 14:30 · 19:30 |
 
-## 8. Controllo
-- Ogni 3 ore il sistema programma i nuovi pacchetti e **verifica** su Blotato i post degli ultimi 3 giorni già passati di orario: pubblicato o fallito.
-- Se qualcosa va storto (file mancante, copertina IG mancante, post fallito) la corsa su GitHub diventa **rossa** e GitHub manda una email. Il dettaglio è nel log della corsa (Actions).
+## 8. Controllo e centro di controllo
+- **Prima del "confermato"** la chat lancia il controllo automatico del cervello del brand (`cervello.py pacchetto …`): con un errore il contenuto non si mostra a Power.
+- **Ogni ora** il sistema programma le cartelle nuove, verifica su Blotato i post già passati di orario (pubblicato o fallito) e aggiorna il foglio **SOCIAL PUBLISHER · Cruscotto**:
+  - **Calendario**: prossimi 7 giorni per brand, EN/IT reel e carosello: manca, aspetta il tuo confermato, in coda, programmato, pubblicato, errore;
+  - **Stato**: una riga per post, con ID del contenuto e link;
+  - **Numeri**: views, like, commenti, reach per post (statistiche di Blotato), scritti anche nella memoria dei cervelli AXUX e VOLWICK (`MEMORIA/numeri.json`) per imparare cosa funziona;
+  - **Chi lavora**: le chat attive di AXUX e VOLWICK;
+  - **Account** e **Storico**.
+- Se qualcosa va storto la corsa su GitHub diventa **rossa** e GitHub manda una email.
 
 ## 9. Sicurezza
 Chiavi solo nei Secrets di GitHub, mai in chat o nei file. Storie con link sticker: solo a mano (limite di Meta). Contenuti dichiarati "fatti con AI" su TikTok e YouTube.

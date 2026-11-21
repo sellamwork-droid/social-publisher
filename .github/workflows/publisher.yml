@@ -2,7 +2,7 @@ name: Pubblicazione social (AXUX + VOLWICK)
 
 on:
   schedule:
-    - cron: "17 */3 * * *"   # ogni 3 ore (risparmia i minuti gratuiti di GitHub Actions)
+    - cron: "17 * * * *"   # ogni ora (repository pubblico: minuti gratuiti)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -42,6 +42,7 @@ jobs:
           DRIVE_INBOX_FOLDER_ID: ${{ secrets.DRIVE_INBOX_FOLDER_ID }}
           DRIVE_PUBLISHED_FOLDER_ID: ${{ secrets.DRIVE_PUBLISHED_FOLDER_ID }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
+          BRAIN_TOKEN: ${{ secrets.BRAIN_TOKEN }}
         run: |
           ARGS=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then

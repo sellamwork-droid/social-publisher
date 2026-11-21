@@ -34,7 +34,8 @@ class Job:
     cover: FileRef | None = None
     source: str = ""         # nome file/cartella sorgente, per il log
     problems: list[str] = field(default_factory=list)
-    alt: dict = field(default_factory=dict)  # piattaforma -> descrizione dedicata (reel1.youtube.txt)
+    alt: dict = field(default_factory=dict)
+    cid: str = ""  # ID del contenuto (da ID.txt): lega il post ai numeri e alla memoria del brand  # piattaforma -> descrizione dedicata (reel1.youtube.txt)
 
 
 def _cover(files: dict[str, FileRef], base: str) -> FileRef | None:
@@ -106,7 +107,7 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
                       key=lambda f: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", f.rel)])
         if imgs:
             txts = [f for rel, f in files.items() if rel.lower().endswith(".txt")
-                    and Path(rel).stem.lower() != "confermato"
+                    and Path(rel).stem.lower() not in ("confermato", "id")
                     and not any(rel.lower().endswith(f".{pl}.txt") for pl in PLATFORMS)]
             cap = txts[0] if len(txts) == 1 else None
             for acc in accounts:
@@ -139,6 +140,15 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
 
 def raw_name(raw: dict[str, FileRef], f: FileRef) -> str:
     return f.rel
+
+
+def parse_ids(text: str, jobs: list[Job]) -> None:
+    """ID.txt: 'reel1=A0012' una riga per reel, oppure un solo ID (carosello)."""
+    pairs = dict(re.findall(r"(?im)^\s*((?:reel|short|storia)\d+)\s*=\s*([A-Za-z]+\d+)", text))
+    single = re.findall(r"(?m)^\s*([A-Za-z]+\d+)\s*$", text)
+    for j in jobs:
+        n = re.sub(r"^short", "reel", j.slot)
+        j.cid = pairs.get(j.slot) or pairs.get(n) or (single[0] if single else "")
 
 
 def adapt_caption(text: str, platform: str) -> str:

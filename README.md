@@ -57,3 +57,6 @@ Da GitHub: Actions → "Pubblicazione social" → Run workflow. La casella "Solo
 3. Commit.
 
 Finché l'ID è `null`, i post per quell'account risultano "saltato".
+
+## Secret facoltativo: BRAIN_TOKEN
+Token GitHub *fine-grained* di sellamwork-droid, solo per i repository `Axux` e `volwick-reel-studio`, permesso **Contents: Read and write**. Serve per la scheda "Chi lavora" e per scrivere `MEMORIA/numeri.json` nei due cervelli. Senza, il resto funziona.

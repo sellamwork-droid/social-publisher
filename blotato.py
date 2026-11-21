@@ -51,5 +51,18 @@ class Blotato:
             return {"postSubmissionId": "dry-run"}
         return self._req("POST", "/posts", json=body)
 
+    def analytics(self, platform: str | None = None, limit: int = 100) -> list[dict]:
+        """Ultima rilevazione dei numeri dei post pubblicati (GET /v2/analytics)."""
+        params = {"sortBy": "views_count", "limit": limit}
+        if platform:
+            params["platform"] = platform
+        r = self._req("GET", "/analytics", params=params)
+        if isinstance(r, list):
+            return r
+        for k in ("items", "data", "posts", "results"):
+            if isinstance(r.get(k), list):
+                return r[k]
+        return []
+
     def post_status(self, submission_id: str) -> dict:
         return self._req("GET", f"/posts/{submission_id}")

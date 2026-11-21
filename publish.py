@@ -31,7 +31,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from blotato import Blotato  # noqa: E402
 from media import cover_jpeg, prepend_cover_frame  # noqa: E402
-from plan import adapt_caption, Job, build_jobs, parse_caption  # noqa: E402
+from plan import adapt_caption, parse_ids, Job, build_jobs, parse_caption  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 from sheet import Dashboard  # noqa: E402
 
@@ -152,6 +152,8 @@ class Publisher:
             log(f"[{brand} {pkg_name}] in attesa: manca il file CONFERMATO (non pubblico nulla)")
             return
         jobs = build_jobs(files, lang, tipo)
+        if "ID.txt" in files:
+            parse_ids(self._local_file(files["ID.txt"]).read_text(encoding="utf-8", errors="replace"), jobs)
         state = self.storage.read_state(pkg_ref)
         if not jobs:
             log(f"[{brand} {pkg_name}] nessun file riconosciuto (controlla i nomi)")
@@ -163,7 +165,7 @@ class Publisher:
             if prev.get("stato") in DONE:
                 continue
             acc = bcfg["accounts"].get(job.account)
-            rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat()}
+            rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat(), "cid": job.cid}
             try:
                 if acc and acc.get("paused"):
                     rec.update(stato="saltato", motivo="account in pausa (config.yaml)")
@@ -213,7 +215,7 @@ class Publisher:
                     "Uscita (ora account)": rec.get("orario", ""), "Uscita (ora Italia)": uscita_it,
                     "Stato": rec["stato"], "Aggiornato (ora Italia)": it_time(self.now),
                     "ID Blotato": rec.get("postSubmissionId", ""),
-                    "Link / motivo": rec.get("motivo", rec.get("nota", ""))})
+                    "Link / motivo": rec.get("motivo", rec.get("nota", "")), "ID contenuto": job.cid})
                 self.sheet.event([it_time(self.now), brand, day, nome, f"{job.kind} {lang}", f"{lang}/{tipo}/{job.source}", uscita_it,
                                   rec["stato"], rec.get("postSubmissionId", ""), rec.get("motivo", rec.get("nota", ""))])
 
@@ -381,6 +383,8 @@ def main() -> None:
     except Exception:
         log("verifica dei post pubblicati non riuscita:")
         traceback.print_exc()
+    from brain import Brain
+    Brain(pub, log).run()  # calendario, numeri, chi lavora (non blocca mai la pubblicazione)
     pub.sheet.flush()
     if pub.problemi and not args.dry_run:
         log(f"{pub.problemi} problemi: controlla i messaggi qui sopra.")

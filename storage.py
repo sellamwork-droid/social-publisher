@@ -173,9 +173,15 @@ class DriveStorage:
         meta = self.svc.files().get(fileId=pkg_ref, fields="appProperties", supportsAllDrives=True).execute()
         out = {}
         for k, v in (meta.get("appProperties") or {}).items():
-            parts = v.split("|", 3) + ["", "", ""]
-            out[k.replace(".", ":", 1)] = {"stato": parts[0], "postSubmissionId": parts[1],
-                                           "quando": parts[2], "motivo": parts[3]}
+            parts = v.split("|")
+            if len(parts) >= 5:  # stato|id|quando|contenuto|motivo
+                rec = {"stato": parts[0], "postSubmissionId": parts[1], "quando": parts[2],
+                       "cid": parts[3], "motivo": "|".join(parts[4:])}
+            else:
+                parts += ["", "", ""]
+                rec = {"stato": parts[0], "postSubmissionId": parts[1], "quando": parts[2],
+                       "motivo": "|".join(parts[3:]).strip("|")}
+            out[k.replace(".", ":", 1)] = rec
         return out
 
     def write_state(self, pkg_ref: str, state: dict) -> None:
@@ -183,7 +189,7 @@ class DriveStorage:
         for k, rec in state.items():
             k = k.replace(":", ".")  # Drive non accetta ':' nelle chiavi
             val = (f"{rec.get('stato', '')}|{rec.get('postSubmissionId') or ''}|{rec.get('quando') or ''}|"
-                   f"{rec.get('motivo') or rec.get('nota') or ''}")
+                   f"{rec.get('cid') or ''}|{rec.get('motivo') or rec.get('nota') or ''}")
             budget = 120 - len(k.encode()) - 2
             props[k] = val.encode()[:budget].decode("utf-8", "ignore")
         self.svc.files().update(fileId=pkg_ref, body={"appProperties": props}, supportsAllDrives=True).execute()
