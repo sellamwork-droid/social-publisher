@@ -64,6 +64,8 @@ Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (tradu
   - AXUX: `→ axux.com | AXUX5 · 5% OFF` / hook / hashtag
   - VOLWICK: la caption con l'offerta e gli hashtag, come nelle regole di Volwick
   - Riga facoltativa `TITLE: …` = titolo dello Short YouTube (tolta dagli altri social). Senza, il titolo è l'hook.
+  - **Hashtag: massimo 5** (limite di Instagram e TikTok dal dicembre 2025). Se sono di più il sistema tiene i primi 5 su IG e TikTok, fino a 15 su YouTube, e su YouTube aggiunge `#Shorts`. Metti quindi per primi i 5 più importanti.
+  - Facoltativo, per un testo diverso su una piattaforma: `reel1.youtube.txt`, `reel1.tiktok.txt`, `reel1.instagram.txt` (per i caroselli `descrizione.tiktok.txt`…). Senza, vale il `.txt` normale.
 
 ## 6. Account (ID Blotato in `config.yaml`)
 | Brand | Instagram IT | Instagram USA | TikTok (EN) | YouTube (EN) |

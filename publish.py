@@ -31,7 +31,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from blotato import Blotato  # noqa: E402
 from media import cover_jpeg, prepend_cover_frame  # noqa: E402
-from plan import Job, build_jobs, parse_caption  # noqa: E402
+from plan import adapt_caption, Job, build_jobs, parse_caption  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 from sheet import Dashboard  # noqa: E402
 
@@ -92,6 +92,7 @@ class Publisher:
         platform = acc["platform"]
         d = self.cfg["defaults"]
         title, text = parse_caption(caption_text)
+        text = adapt_caption(text, platform)
         target: dict = {"targetType": platform}
         media_urls: list[str] = []
 
@@ -172,7 +173,8 @@ class Publisher:
                     rec.update(stato="errore", motivo="; ".join(job.problems))
                 else:
                     when, late = self.slot_time(pkg_date, acc, job.slot)
-                    caption = self._local_file(job.caption).read_text(encoding="utf-8") if job.caption else ""
+                    src = job.alt.get(acc["platform"]) or job.caption
+                    caption = self._local_file(src).read_text(encoding="utf-8") if src else ""
                     body = self.build_post(job, acc, caption)
                     body["scheduledTime"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
                     try:

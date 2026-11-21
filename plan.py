@@ -34,6 +34,7 @@ class Job:
     cover: FileRef | None = None
     source: str = ""         # nome file/cartella sorgente, per il log
     problems: list[str] = field(default_factory=list)
+    alt: dict = field(default_factory=dict)  # piattaforma -> descrizione dedicata (reel1.youtube.txt)
 
 
 def _cover(files: dict[str, FileRef], base: str) -> FileRef | None:
@@ -53,6 +54,8 @@ def _caption(files: dict[str, FileRef], *candidates: str) -> FileRef | None:
 
 LANGS = ("EN", "IT")
 TIPI = ("REEL", "CAROSELLI", "STORIE")
+PLATFORMS = ("instagram", "tiktok", "youtube")
+MAX_HASHTAGS = {"instagram": 5, "tiktok": 5, "youtube": 15}  # IG e TikTok: limite di 5 dal dic. 2025
 TARGETS = {  # (lingua, tipo) -> account
     ("EN", "REEL"): ["ig_us", "tiktok", "youtube"], ("IT", "REEL"): ["ig_it"],
     ("EN", "CAROSELLI"): ["ig_us", "tiktok"], ("IT", "CAROSELLI"): ["ig_it"],
@@ -103,7 +106,8 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
                       key=lambda f: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", f.rel)])
         if imgs:
             txts = [f for rel, f in files.items() if rel.lower().endswith(".txt")
-                    and Path(rel).stem.lower() != "confermato"]
+                    and Path(rel).stem.lower() != "confermato"
+                    and not any(rel.lower().endswith(f".{pl}.txt") for pl in PLATFORMS)]
             cap = txts[0] if len(txts) == 1 else None
             for acc in accounts:
                 add(acc, "carousel", "carosello", imgs[:35 if acc == "tiktok" else 10], cap,
@@ -124,11 +128,35 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
                 cap = _caption(files, f"storia{n}.txt")
                 for acc in accounts:
                     jobs.append(Job(f"{acc}:storia{n}", acc, "story", f"storia{n}", [f], cap, source=raw_name(raw, f)))
+    for j in jobs:  # descrizioni dedicate a una piattaforma: <nome>.<piattaforma>.txt
+        if j.caption:
+            stem = j.caption.rel.rsplit(".", 1)[0]
+            for pl in PLATFORMS:
+                if f"{stem}.{pl}.txt" in files:
+                    j.alt[pl] = files[f"{stem}.{pl}.txt"]
     return jobs
 
 
 def raw_name(raw: dict[str, FileRef], f: FileRef) -> str:
     return f.rel
+
+
+def adapt_caption(text: str, platform: str) -> str:
+    """Adatta la descrizione alla piattaforma: tiene solo i primi hashtag consentiti
+    (Instagram e TikTok 5, YouTube 15) e aggiunge #Shorts su YouTube."""
+    limit = MAX_HASHTAGS.get(platform, 30)
+    seen = 0
+
+    def keep(m):
+        nonlocal seen
+        seen += 1
+        return m.group(0) if seen <= limit else ""
+
+    out = re.sub(r"(?<![\w/])#\w+", keep, text)
+    if platform == "youtube" and "#shorts" not in out.lower():
+        out = out.rstrip() + " #Shorts"
+    out = re.sub(r"[ \t]+\n", "\n", re.sub(r"[ \t]{2,}", " ", out))
+    return re.sub(r"\n{3,}", "\n\n", out).strip()
 
 
 def parse_caption(text: str) -> tuple[str, str]:
