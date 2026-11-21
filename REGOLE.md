@@ -63,8 +63,8 @@ Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (tradu
 ## 6. Account (ID Blotato in `config.yaml`)
 | Brand | Instagram IT | Instagram USA | TikTok (EN) | YouTube (EN) |
 |---|---|---|---|---|
-| AXUX | @axux.ita | @axux.official (da collegare da AdsPower) | @axux.official (in pausa) | Media axux |
-| VOLWICK | da collegare | @volwick.official | @volwick.official (in pausa) | Volwick Official |
+| AXUX | @axux.ita | @axux.officiall | @axux.official (in pausa) | Media axux (non verificato: niente copertina) |
+| VOLWICK | @volwick.ita | @volwick.officiall | @volwick.official (in pausa) | Volwick Official |
 
 Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con proxy USA.
 
