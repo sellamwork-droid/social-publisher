@@ -1,7 +1,7 @@
 """Sistema di pubblicazione AXUX + VOLWICK.
 
 Legge i pacchetti in DA MANDARE/<BRAND>/<AAAA-MM-GG>/, prepara ogni post e lo programma su Blotato
-all'orario dello slot dell'account. Registra lo stato in _stato.json dentro il pacchetto (così non
+all'orario dello slot dell'account. Registra lo stato nelle proprietà nascoste della cartella del pacchetto (così non
 programma mai due volte lo stesso post) e, quando il pacchetto è finito, lo sposta in PUBBLICATI.
 
 Uso:
@@ -185,7 +185,14 @@ class Publisher:
                     caption = self._local_file(job.caption).read_text(encoding="utf-8")
                     body = self.build_post(job, acc, caption)
                     body["scheduledTime"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
-                    res = self.api.create_post(body)
+                    try:
+                        res = self.api.create_post(body)
+                    except Exception as e:
+                        if "thumbnail" in str(e).lower() and body["post"]["target"].pop("thumbnailUrl", None):
+                            res = self.api.create_post(body)  # canale non verificato: senza miniatura
+                            rec["nota"] = "miniatura non messa: canale YouTube non verificato"
+                        else:
+                            raise
                     local_when = when.astimezone(ZoneInfo(acc["timezone"])).strftime("%Y-%m-%d %H:%M")
                     rec.update(stato="programmato", orario=f"{local_when} ({acc['timezone']})",
                                postSubmissionId=res.get("postSubmissionId"),
@@ -207,8 +214,11 @@ class Publisher:
                             rec.get("motivo", rec.get("nota", ""))])
 
         if all(state.get(j.key, {}).get("stato") in DONE for j in jobs) and not self.api.dry_run:
-            self.storage.move_to_published(brand, pkg_name, pkg_ref)
-            log(f"[{brand} {pkg_name}] completo: spostato in PUBBLICATI")
+            try:
+                self.storage.move_to_published(brand, pkg_name, pkg_ref)
+                log(f"[{brand} {pkg_name}] completo: spostato in PUBBLICATI")
+            except Exception as e:
+                log(f"[{brand} {pkg_name}] completo (tutto programmato), ma non spostato in PUBBLICATI: {str(e)[:200]}")
 
     def run(self) -> None:
         tz = ZoneInfo(self.cfg.get("package_timezone", "Europe/Rome"))

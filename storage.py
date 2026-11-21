@@ -108,7 +108,10 @@ class DriveStorage:
         bid = self._child_folder(self.inbox_id, brand)
         if not bid:
             return {}
-        return {f["name"]: f["id"] for f in self._children(bid) if f["mimeType"] == self.FOLDER}
+        pk = {f["name"]: f["id"] for f in self._children(bid) if f["mimeType"] == self.FOLDER}
+        self._parent = getattr(self, "_parent", {})
+        self._parent.update({ref: bid for ref in pk.values()})
+        return pk
 
     def list_files(self, pkg_ref: str) -> dict[str, FileRef]:
         out: dict[str, FileRef] = {}
@@ -143,22 +146,24 @@ class DriveStorage:
         out = {}
         for k, v in (meta.get("appProperties") or {}).items():
             parts = v.split("|", 2) + ["", ""]
-            out[k] = {"stato": parts[0], "postSubmissionId": parts[1], "motivo": parts[2]}
+            out[k.replace(".", ":", 1)] = {"stato": parts[0], "postSubmissionId": parts[1], "motivo": parts[2]}
         return out
 
     def write_state(self, pkg_ref: str, state: dict) -> None:
         props = {}
         for k, rec in state.items():
+            k = k.replace(":", ".")  # Drive non accetta ':' nelle chiavi
             val = f"{rec.get('stato', '')}|{rec.get('postSubmissionId') or ''}|{rec.get('motivo') or rec.get('nota') or ''}"
             budget = 120 - len(k.encode()) - 2
             props[k] = val.encode()[:budget].decode("utf-8", "ignore")
         self.svc.files().update(fileId=pkg_ref, body={"appProperties": props}, supportsAllDrives=True).execute()
 
     def move_to_published(self, brand: str, date: str, pkg_ref: str) -> None:
-        dest = self._child_folder(self.published_id, brand, create=True)
-        meta = self.svc.files().get(fileId=pkg_ref, fields="parents", supportsAllDrives=True).execute()
+        dest = self._child_folder(self.published_id, brand)
+        src = getattr(self, "_parent", {}).get(pkg_ref)
+        if not dest or not src:
+            raise RuntimeError(f"cartella PUBBLICATI/{brand} o cartella di origine non trovata")
         self.svc.files().update(
-            fileId=pkg_ref, addParents=dest,
-            removeParents=",".join(meta.get("parents", [])),
+            fileId=pkg_ref, addParents=dest, removeParents=src,
             fields="id", supportsAllDrives=True,
         ).execute()
