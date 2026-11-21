@@ -6,6 +6,7 @@ require_confirmation: true  # pubblica solo i pacchetti con dentro il file CONFE
 drive:                     # Google Drive: "SOCIAL PUBLISHER" (Il mio Drive di sellam.work)
   inbox_folder_id: 1SQT2nBorOoHobC-KUrWNhBy1XcoYiZIe       # SOCIAL PUBLISHER/DA MANDARE
   published_folder_id: 12CnX3Bq3sp_ChrmGFJHDBKj7wue3T-Y_   # SOCIAL PUBLISHER/PUBBLICATI
+  sheet_id: 1beKkZYeMqay39GFeypYoE4CZ1pL-fIA3mK8g7fWui9A   # SOCIAL PUBLISHER · Cruscotto (primo foglio)
 lookahead_days: 2          # programma i pacchetti di oggi e dei prossimi 2 giorni
 package_timezone: Europe/Rome   # fuso usato per leggere la data nel nome della cartella
 late_publish_minutes: 10   # se uno slot è già passato, pubblica tra 10 minuti

@@ -58,7 +58,7 @@ class SheetLog:
             return
         try:
             self.svc.spreadsheets().values().append(
-                spreadsheetId=self.sheet_id, range="Log!A:J", valueInputOption="USER_ENTERED",
+                spreadsheetId=self.sheet_id, range="A:J", valueInputOption="USER_ENTERED",
                 body={"values": [row]}).execute()
         except Exception as e:  # il log non deve mai bloccare la pubblicazione
             log(f"   (log foglio non riuscito: {e})")
@@ -228,6 +228,35 @@ class Publisher:
             except Exception as e:
                 log(f"[{brand} {pkg_name}] completo (tutto programmato), ma non spostato in PUBBLICATI: {str(e)[:200]}")
 
+    def check_accounts(self) -> None:
+        """Avvisa se un account usato dal sistema non risulta più collegato o sano su Blotato."""
+        items = self.api.accounts()
+        by_id = {str(a.get("id")): a for a in items}
+        bad_words = ("reauth", "reconnect", "expired", "disconnected", "error", "unhealthy", "invalid")
+        for brand, bcfg in self.cfg["brands"].items():
+            for name, acc in bcfg["accounts"].items():
+                aid = acc.get("blotato_id")
+                if not aid or acc.get("paused"):
+                    continue
+                a = by_id.get(str(aid))
+                if not a:
+                    motivo = f"account {aid} non trovato su Blotato (scollegato o rimosso)"
+                else:
+                    flags = {k: v for k, v in a.items() if isinstance(v, (str, bool)) and (
+                        (isinstance(v, bool) and v and any(w in k.lower() for w in bad_words)) or
+                        (isinstance(v, str) and k.lower() in ("status", "health", "state") and
+                         v.lower() not in ("healthy", "active", "connected", "ok")))}
+                    motivo = f"account {aid} da ricollegare su Blotato ({flags})" if flags else ""
+                if motivo:
+                    log(f"[{brand}] {name}: ATTENZIONE {motivo}")
+                    if not self.api.dry_run:
+                        self.problemi += 1
+                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, "", name, "account", "", "",
+                                        "DA RICOLLEGARE", str(aid), motivo])
+        log(f"Account Blotato controllati: {len(items)} collegati.")
+        if self.api.dry_run and items:
+            log("campi di un account Blotato: " + ", ".join(sorted(items[0].keys())))
+
     def verify(self) -> None:
         """Controlla su Blotato i post già passati di orario: pubblicato o fallito."""
         if self.api.dry_run:
@@ -327,7 +356,13 @@ def main() -> None:
     else:
         storage = DriveStorage(sa, os.environ["DRIVE_INBOX_FOLDER_ID"], os.environ["DRIVE_PUBLISHED_FOLDER_ID"])
     now = datetime.fromisoformat(args.now).replace(tzinfo=UTC) if args.now else datetime.now(UTC)
-    pub = Publisher(cfg, storage, api, SheetLog(sa, os.environ.get("SHEET_ID")), now)
+    sheet_id = os.environ.get("SHEET_ID") or cfg.get("drive", {}).get("sheet_id")
+    pub = Publisher(cfg, storage, api, SheetLog(None if args.dry_run else sa, sheet_id), now)
+    try:
+        pub.check_accounts()
+    except Exception:
+        log("controllo account non riuscito:")
+        traceback.print_exc()
     pub.run()
     try:
         pub.verify()
