@@ -2,7 +2,7 @@ name: Pubblicazione social (AXUX + VOLWICK)
 
 on:
   schedule:
-    - cron: "17 * * * *"   # ogni ora (repository pubblico: minuti gratuiti)
+    - cron: "*/15 * * * *"   # ogni 15 minuti: le conferme dal portale escono in fretta (repository pubblico: minuti gratuiti)
   workflow_dispatch:
     inputs:
       dry_run:
@@ -43,6 +43,8 @@ jobs:
           DRIVE_PUBLISHED_FOLDER_ID: ${{ secrets.DRIVE_PUBLISHED_FOLDER_ID }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           BRAIN_TOKEN: ${{ secrets.BRAIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           ARGS=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then

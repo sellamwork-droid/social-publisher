@@ -197,6 +197,9 @@ class Brain:
             m = {k: _num(it, names) for k, names in METRICHE.items()}
             link = next((v for v in vals if v.startswith("http") and "blotato" not in v), "")
             key = f"{info['brand']}|{info['pkg']}|{info['key']}"
+            self.pub.portale.post(key, views=m["views"], likes=m["likes"], commenti=m["comments"], reach=m["reach"],
+                                  condivisioni=m["shares"], salvataggi=m["saves"], numeri_at=datetime.now(timezone.utc).isoformat(),
+                                  **({"link": link} if link else {}))
             self.pub.sheet.upsert("Numeri", key, Brand=info["brand"], **{
                 "Giorno uscita": info["giorno"], "Account": info["account"], "Tipo": info["tipo"],
                 "ID contenuto": info["cid"], "Views": m["views"], "Like": m["likes"], "Commenti": m["comments"],
@@ -246,6 +249,9 @@ class Brain:
                 rows.append([brand, r.get("chi", f["name"]), r.get("cosa", ""), r.get("video") or r.get("id", ""),
                              _it(t), stato])
         rows.sort(key=lambda r: ({"ATTIVA": 0, "ferma": 1, "chiusa": 2}[r[5]], r[4]), reverse=False)
+        self.pub.portale.esterne([{"chiave": f"{r[0]}|{r[1]}", "brand": r[0], "chi": r[1], "cosa": r[2], "contenuto": r[3],
+                                   "ultimo": datetime.strptime(r[4], "%Y-%m-%d %H:%M").replace(tzinfo=ROME).isoformat(), "stato": r[5]}
+                                  for r in rows if not r[1].startswith("studio-hub")])
         self.pub.sheet.replace("Chi lavora", rows or [["", "", "nessuna chat nelle ultime 24 ore", "", "", ""]])
 
     def run(self) -> None:

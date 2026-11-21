@@ -55,6 +55,8 @@ class Publisher:
         self._uploads: dict[tuple, str] = {}
         self.problemi = 0  # errori e post falliti: se > 0 la corsa finisce in rosso (GitHub manda una email)
         self._local: dict[str, Path] = {}
+        from portale import Portale
+        self.portale = Portale(None, log)  # sostituito in main() se il portale è collegato
 
     # ---------- file
     def _local_file(self, f) -> Path:
@@ -145,6 +147,7 @@ class Publisher:
     # ---------- pacchetto
     def run_package(self, brand: str, bcfg: dict, pkg_name: str, pkg_ref: str) -> None:
         lang, tipo, day = pkg_name.split("/")
+        day = day.split("~")[0]  # pacchetti del portale: EN/REEL/2026-11-23~ab12cd34
         pkg_date = date.fromisoformat(day)
         files = self.storage.list_files(pkg_ref)
         if self.cfg.get("require_confirmation", True) and not any(
@@ -210,6 +213,13 @@ class Publisher:
             uscita_it = (it_time(datetime.strptime(rec["quando"], "%Y%m%d%H%M").replace(tzinfo=UTC))
                          if rec.get("quando") else "")
             if not self.api.dry_run:
+                self.portale.post(f"{brand}|{pkg_name}|{job.key}", brand=brand, uscita=day, account=nome,
+                                  piattaforma=(acc or {}).get("platform", job.account), tipo=job.kind, lingua=lang,
+                                  contenuto_id=job.cid, stato=rec["stato"], blotato_id=rec.get("postSubmissionId") or "",
+                                  ora_uscita=(datetime.strptime(rec["quando"], "%Y%m%d%H%M").replace(tzinfo=UTC).isoformat()
+                                              if rec.get("quando") else None),
+                                  consegna_id=(pkg_ref.split("::", 1)[1] if pkg_ref.startswith("portale::") else None),
+                                  motivo=rec.get("motivo", rec.get("nota", "")) or "")
                 self.sheet.upsert("Stato", f"{brand}|{pkg_name}|{job.key}", Brand=brand, **{
                     "Giorno uscita": day, "Account": nome, "Tipo": f"{job.kind} {lang}", "File": f"{lang}/{tipo}/{job.source}",
                     "Uscita (ora account)": rec.get("orario", ""), "Uscita (ora Italia)": uscita_it,
@@ -278,7 +288,7 @@ class Publisher:
             pk = {**self.storage.published_packages(brand), **self.storage.packages(brand)}
             for name, ref in pk.items():
                 try:
-                    d = date.fromisoformat(name.rsplit("/", 1)[-1])
+                    d = date.fromisoformat(name.rsplit("/", 1)[-1].split("~")[0])
                 except ValueError:
                     continue
                 if not (today - timedelta(days=3) <= d <= today):
@@ -299,6 +309,7 @@ class Publisher:
                     if stato == "published":
                         rec["stato"], changed = "pubblicato", True
                         log(f"[{brand} {name}] {key}: PUBBLICATO {st.get('publicUrl', '')}")
+                        self.portale.post(f"{brand}|{name}|{key}", stato="pubblicato", link=st.get("publicUrl", "") or "")
                         self.sheet.upsert("Stato", f"{brand}|{name}|{key}", Stato="pubblicato", **{
                             "Aggiornato (ora Italia)": it_time(self.now), "Link / motivo": st.get("publicUrl", "")})
                         self.sheet.event([it_time(self.now), brand, name, key.split(":")[0], "", "", "",
@@ -307,6 +318,7 @@ class Publisher:
                         rec["stato"], rec["motivo"], changed = "fallito", (st.get("errorMessage") or "")[:300], True
                         self.problemi += 1
                         log(f"[{brand} {name}] {key}: FALLITO su Blotato: {rec['motivo']}")
+                        self.portale.post(f"{brand}|{name}|{key}", stato="fallito", motivo=rec["motivo"])
                         self.sheet.upsert("Stato", f"{brand}|{name}|{key}", Stato="FALLITO", **{
                             "Aggiornato (ora Italia)": it_time(self.now), "Link / motivo": rec["motivo"]})
                         self.sheet.event([it_time(self.now), brand, name, key.split(":")[0], "", "", "",
@@ -324,7 +336,7 @@ class Publisher:
         for brand, bcfg in self.cfg["brands"].items():
             for name, ref in sorted(self.storage.packages(brand).items()):
                 try:
-                    d = date.fromisoformat(name.rsplit("/", 1)[-1])
+                    d = date.fromisoformat(name.rsplit("/", 1)[-1].split("~")[0])
                 except ValueError:
                     log(f"[{brand}] cartella '{name}' ignorata: il nome deve essere AAAA-MM-GG")
                     continue
@@ -369,9 +381,15 @@ def main() -> None:
         storage = LocalStorage(*args.local)
     else:
         storage = DriveStorage(sa, os.environ["DRIVE_INBOX_FOLDER_ID"], os.environ["DRIVE_PUBLISHED_FOLDER_ID"])
+    from portale import MultiStorage, PortalStorage, Portale, connect
+    supa = connect()
+    storage = MultiStorage(drive=storage, portale=PortalStorage(supa) if supa else None)
+    log("Portale Studio Hub: " + ("collegato" if supa else "non collegato (mancano SUPABASE_URL e SUPABASE_SERVICE_KEY)"))
     now = datetime.fromisoformat(args.now).replace(tzinfo=UTC) if args.now else datetime.now(UTC)
     sheet_id = os.environ.get("SHEET_ID") or cfg.get("drive", {}).get("sheet_id")
     pub = Publisher(cfg, storage, api, Dashboard(None if args.dry_run else sa, sheet_id, log), now)
+    if supa and not args.dry_run:
+        pub.portale = Portale(supa, log)
     try:
         pub.check_accounts()
     except Exception:
@@ -386,6 +404,7 @@ def main() -> None:
     from brain import Brain
     Brain(pub, log).run()  # calendario, numeri, chi lavora (non blocca mai la pubblicazione)
     pub.sheet.flush()
+    pub.portale.flush(pub.problemi == 0, {"problemi": pub.problemi, "ora": now.isoformat()})
     if pub.problemi and not args.dry_run:
         log(f"{pub.problemi} problemi: controlla i messaggi qui sopra.")
         sys.exit(1)

@@ -3,6 +3,9 @@
 Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti per AXUX o VOLWICK segue questo file.
 (Copia anche nel Project AXUX: `sistema-pubblicazione-axux-volwick.md`. In caso di differenze vale questo file.)
 
+## Portale Studio Hub (dal 22 novembre 2026)
+Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat per brand e tipologia (Claude Code sul Mac), consegne con anteprima, bottone **Confermato**, uscite e numeri. Una consegna confermata nel portale esce da sola entro 15 minuti, con le stesse regole di questo file (nomi, copertina, orari, account). Le chat su claude.ai continuano a usare le cartelle di Drive qui sotto.
+
 ## 0. Regola n.1 — si pubblica solo ciò che Power conferma
 - La chat mostra a Power video, copertine, descrizioni e caroselli, poi aspetta.
 - Solo quando Power scrive **"confermato"** la chat salva il contenuto su Drive nella sua cartella (vedi sotto) e ci aggiunge il file vuoto **`CONFERMATO.txt`**.
