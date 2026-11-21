@@ -45,7 +45,7 @@ jobs:
         run: |
           ARGS=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            [ "${{ inputs.dry_run }}" = "true" ] && ARGS="--dry-run"
-            [ -n "${{ inputs.simula_data }}" ] && ARGS="$ARGS --now ${{ inputs.simula_data }}"
+            if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+            if [ -n "${{ inputs.simula_data }}" ]; then ARGS="$ARGS --now ${{ inputs.simula_data }}"; fi
           fi
           python publish.py $ARGS
