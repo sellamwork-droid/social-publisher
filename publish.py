@@ -254,8 +254,9 @@ class Publisher:
                         self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, "", name, "account", "", "",
                                         "DA RICOLLEGARE", str(aid), motivo])
         log(f"Account Blotato controllati: {len(items)} collegati.")
-        if self.api.dry_run and items:
-            log("campi di un account Blotato: " + ", ".join(sorted(items[0].keys())))
+        if self.api.dry_run:
+            for a in items:
+                log(f"   account Blotato {a.get('id')}: {a.get('platform')} @{a.get('username')} ({a.get('fullname')})")
 
     def verify(self) -> None:
         """Controlla su Blotato i post già passati di orario: pubblicato o fallito."""
