@@ -43,14 +43,18 @@ Il sistema prende i pacchetti di oggi e dei 2 giorni dopo. Le altre cartelle gi�
 | `shortN_EN.mp4` | YouTube Shorts al posto di `reelN_EN` |
 | `carosello_IT/` | Instagram italiano |
 | `carosello_EN/` | Instagram USA + TikTok (carosello foto) |
+| `storiaN_IT.png/.jpg/.mp4` | storia Instagram italiano (slot storia1–3) |
+| `storiaN_EN.png/.jpg/.mp4` | storia Instagram USA |
+
+Storie: escono in automatico ma **senza link sticker** (Meta non lo permette via API a nessun servizio ufficiale). Per portare traffico: scritta nella storia tipo "Rispondi UNLOCK" + DM automation di Blotato che manda il link.
 
 ## 4. Volume per brand al giorno
 Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (traduzione esatta dell'IT) · TikTok: 2 reel + 1 carosello (in pausa) · YouTube Shorts: 2.
 
 ## 5. File
 - **Video:** verticale 9:16, MP4 H.264 + AAC, 3 s – 3 min. Su TikTok il sistema mette da solo la copertina come primo frame.
-- **Copertina** `<nome>_cover.png/.jpg`: verticale 1080×1920 o 4K. Se manca, si usa il primo frame. Miniatura YouTube solo con canale verificato.
-- **Carosello:** `01.png` … massimo 10, stesso formato (4:5 1080×1350 consigliato).
+- **Copertina** `<nome>_cover.png/.jpg`: verticale 1080×1920 o 4K. **Obbligatoria per i reel Instagram**: senza copertina il reel IG non esce (errore). Per YouTube e TikTok è facoltativa (YouTube la usa solo se il canale è verificato).
+- **Carosello:** `01.png`, `02.png` … massimo 10 su Instagram, stesso formato (4:5 1080×1350 consigliato). Escono **nell'ordine dei numeri** (anche 1, 2, 10 sono in ordine giusto).
 - **Descrizione** `<nome>.txt` (obbligatoria, lingua dell'account):
   - AXUX: `→ axux.com | AXUX5 · 5% OFF` / hook / hashtag
   - VOLWICK: la caption con l'offerta e gli hashtag, come nelle regole di Volwick
@@ -72,5 +76,9 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 | TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 | 11:30 · 14:30 · 19:30 |
 | Shorts (New York) | short1 14:00 · short2 19:00 | 14:30 · 19:30 |
 
-## 8. Sicurezza
+## 8. Controllo
+- Ogni 3 ore il sistema programma i nuovi pacchetti e **verifica** su Blotato i post degli ultimi 3 giorni già passati di orario: pubblicato o fallito.
+- Se qualcosa va storto (file mancante, copertina IG mancante, post fallito) la corsa su GitHub diventa **rossa** e GitHub manda una email. Il dettaglio è nel log della corsa (Actions).
+
+## 9. Sicurezza
 Chiavi solo nei Secrets di GitHub, mai in chat o nei file. Storie con link sticker: solo a mano (limite di Meta). Contenuti dichiarati "fatti con AI" su TikTok e YouTube.

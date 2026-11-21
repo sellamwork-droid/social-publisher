@@ -33,6 +33,10 @@ class LocalStorage:
             return {}
         return {p.name: str(p) for p in d.iterdir() if p.is_dir()}
 
+    def published_packages(self, brand: str) -> dict[str, str]:
+        d = self.published / brand
+        return {p.name: str(p) for p in d.iterdir() if p.is_dir()} if d.is_dir() else {}
+
     def list_files(self, pkg_ref: str) -> dict[str, FileRef]:
         root = Path(pkg_ref)
         out = {}
@@ -113,6 +117,12 @@ class DriveStorage:
         self._parent.update({ref: bid for ref in pk.values()})
         return pk
 
+    def published_packages(self, brand: str) -> dict[str, str]:
+        bid = self._child_folder(self.published_id, brand)
+        if not bid:
+            return {}
+        return {f["name"]: f["id"] for f in self._children(bid) if f["mimeType"] == self.FOLDER}
+
     def list_files(self, pkg_ref: str) -> dict[str, FileRef]:
         out: dict[str, FileRef] = {}
 
@@ -145,15 +155,17 @@ class DriveStorage:
         meta = self.svc.files().get(fileId=pkg_ref, fields="appProperties", supportsAllDrives=True).execute()
         out = {}
         for k, v in (meta.get("appProperties") or {}).items():
-            parts = v.split("|", 2) + ["", ""]
-            out[k.replace(".", ":", 1)] = {"stato": parts[0], "postSubmissionId": parts[1], "motivo": parts[2]}
+            parts = v.split("|", 3) + ["", "", ""]
+            out[k.replace(".", ":", 1)] = {"stato": parts[0], "postSubmissionId": parts[1],
+                                           "quando": parts[2], "motivo": parts[3]}
         return out
 
     def write_state(self, pkg_ref: str, state: dict) -> None:
         props = {}
         for k, rec in state.items():
             k = k.replace(":", ".")  # Drive non accetta ':' nelle chiavi
-            val = f"{rec.get('stato', '')}|{rec.get('postSubmissionId') or ''}|{rec.get('motivo') or rec.get('nota') or ''}"
+            val = (f"{rec.get('stato', '')}|{rec.get('postSubmissionId') or ''}|{rec.get('quando') or ''}|"
+                   f"{rec.get('motivo') or rec.get('nota') or ''}")
             budget = 120 - len(k.encode()) - 2
             props[k] = val.encode()[:budget].decode("utf-8", "ignore")
         self.svc.files().update(fileId=pkg_ref, body={"appProperties": props}, supportsAllDrives=True).execute()

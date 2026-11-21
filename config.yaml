@@ -35,12 +35,12 @@ brands:
         platform: instagram
         blotato_id: "87313"        # @axux.ita
         timezone: Europe/Rome
-        slots: {reel1: "12:45", carosello: "18:00", reel2: "20:30"}
+        slots: {reel1: "12:45", carosello: "18:00", reel2: "20:30", storia1: "10:00", storia2: "16:00", storia3: "19:30"}
       ig_us:
         platform: instagram
         blotato_id: null           # @axux.official Instagram (USA, AdsPower): inserire l'ID dopo il collegamento
         timezone: America/New_York
-        slots: {carosello: "09:00", reel1: "12:00", reel2: "18:00"}
+        slots: {carosello: "09:00", reel1: "12:00", reel2: "18:00", storia1: "08:30", storia2: "13:30", storia3: "20:00"}
       tiktok:
         platform: tiktok
         paused: true               # TikTok fermo per ora: togliere questa riga per riattivarlo
@@ -59,12 +59,12 @@ brands:
         platform: instagram
         blotato_id: null           # Instagram Volwick italiano: inserire l'ID dopo il collegamento
         timezone: Europe/Rome
-        slots: {reel1: "13:00", carosello: "18:30", reel2: "21:00"}
+        slots: {reel1: "13:00", carosello: "18:30", reel2: "21:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
       ig_us:
         platform: instagram
         blotato_id: "81927"        # @volwick.official (USA, AdsPower)
         timezone: America/New_York
-        slots: {carosello: "09:30", reel1: "12:30", reel2: "18:30"}
+        slots: {carosello: "09:30", reel1: "12:30", reel2: "18:30", storia1: "09:00", storia2: "14:00", storia3: "20:30"}
       tiktok:
         platform: tiktok
         paused: true               # TikTok fermo per ora: togliere questa riga per riattivarlo

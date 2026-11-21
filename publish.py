@@ -35,7 +35,7 @@ from plan import Job, build_jobs, parse_caption  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 
 UTC = timezone.utc
-DONE = {"programmato", "saltato"}
+DONE = {"programmato", "saltato", "pubblicato", "fallito"}
 
 
 def log(msg: str) -> None:
@@ -69,6 +69,7 @@ class Publisher:
         self.cfg, self.storage, self.api, self.sheet, self.now = cfg, storage, api, sheet, now
         self.tmp = Path(tempfile.mkdtemp(prefix="pub_"))
         self._uploads: dict[tuple, str] = {}
+        self.problemi = 0  # errori e post falliti: se > 0 la corsa finisce in rosso (GitHub manda una email)
         self._local: dict[str, Path] = {}
 
     # ---------- file
@@ -110,7 +111,9 @@ class Publisher:
         target: dict = {"targetType": platform}
         media_urls: list[str] = []
 
-        if job.kind == "carousel":
+        if job.kind == "story":
+            media_urls.append(self._upload(("story", job.media[0].ref), self._local_file(job.media[0])))
+        elif job.kind == "carousel":
             for img in job.media:
                 media_urls.append(self._upload(("img", img.ref), self._local_file(img)))
         else:
@@ -124,7 +127,9 @@ class Publisher:
                 media_urls.append(self._upload(("video", job.media[0].ref), video))
 
         if platform == "instagram":
-            if job.kind == "reel":
+            if job.kind == "story":
+                target["mediaType"] = "story"
+            elif job.kind == "reel":
                 target["mediaType"] = "reel"
                 target["shareToFeed"] = d["instagram"].get("shareToFeed", True)
                 cover = self._cover_url(job)
@@ -182,7 +187,7 @@ class Publisher:
                     rec.update(stato="errore", motivo="; ".join(job.problems))
                 else:
                     when, late = self.slot_time(pkg_date, acc, job.slot)
-                    caption = self._local_file(job.caption).read_text(encoding="utf-8")
+                    caption = self._local_file(job.caption).read_text(encoding="utf-8") if job.caption else ""
                     body = self.build_post(job, acc, caption)
                     body["scheduledTime"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
                     try:
@@ -195,11 +200,14 @@ class Publisher:
                             raise
                     local_when = when.astimezone(ZoneInfo(acc["timezone"])).strftime("%Y-%m-%d %H:%M")
                     rec.update(stato="programmato", orario=f"{local_when} ({acc['timezone']})",
+                               quando=when.strftime("%Y%m%d%H%M"),
                                postSubmissionId=res.get("postSubmissionId"),
                                **({"nota": "slot già passato: pubblicato appena possibile"} if late else {}))
             except Exception as e:
                 rec.update(stato="errore", motivo=str(e)[:400])
                 traceback.print_exc()
+            if rec["stato"] == "errore":
+                self.problemi += 1
             if self.api.dry_run:  # in prova non si salva nulla, così la corsa vera riparte da zero
                 rec["stato"] = "prova:" + rec["stato"]
             else:
@@ -219,6 +227,52 @@ class Publisher:
                 log(f"[{brand} {pkg_name}] completo: spostato in PUBBLICATI")
             except Exception as e:
                 log(f"[{brand} {pkg_name}] completo (tutto programmato), ma non spostato in PUBBLICATI: {str(e)[:200]}")
+
+    def verify(self) -> None:
+        """Controlla su Blotato i post già passati di orario: pubblicato o fallito."""
+        if self.api.dry_run:
+            return
+        tz = ZoneInfo(self.cfg.get("package_timezone", "Europe/Rome"))
+        today = self.now.astimezone(tz).date()
+        soglia = (self.now - timedelta(minutes=20)).strftime("%Y%m%d%H%M")
+        for brand in self.cfg["brands"]:
+            pk = {**self.storage.published_packages(brand), **self.storage.packages(brand)}
+            for name, ref in pk.items():
+                try:
+                    d = date.fromisoformat(name)
+                except ValueError:
+                    continue
+                if not (today - timedelta(days=3) <= d <= today):
+                    continue
+                state = self.storage.read_state(ref)
+                changed = False
+                for key, rec in state.items():
+                    if rec.get("stato") != "programmato" or not rec.get("postSubmissionId") or not rec.get("quando"):
+                        continue
+                    if rec["quando"] > soglia:
+                        continue
+                    try:
+                        st = self.api.post_status(rec["postSubmissionId"])
+                    except Exception as e:
+                        log(f"[{brand} {name}] {key}: stato non leggibile ({str(e)[:120]})")
+                        continue
+                    stato = (st.get("status") or st.get("post", {}).get("status") or "").lower()
+                    if stato == "published":
+                        rec["stato"], changed = "pubblicato", True
+                        log(f"[{brand} {name}] {key}: PUBBLICATO {st.get('publicUrl', '')}")
+                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, name, key.split(":")[0], "",
+                                        "", "", "pubblicato", rec["postSubmissionId"], st.get("publicUrl", "")])
+                    elif stato == "failed":
+                        rec["stato"], rec["motivo"], changed = "fallito", (st.get("errorMessage") or "")[:300], True
+                        self.problemi += 1
+                        log(f"[{brand} {name}] {key}: FALLITO su Blotato: {rec['motivo']}")
+                        self.sheet.add([self.now.strftime("%Y-%m-%d %H:%M"), brand, name, key.split(":")[0], "",
+                                        "", "", "FALLITO", rec["postSubmissionId"], rec["motivo"]])
+                if changed:
+                    try:
+                        self.storage.write_state(ref, state)
+                    except Exception as e:
+                        log(f"[{brand} {name}] stato verifiche non salvato: {e}")
 
     def run(self) -> None:
         tz = ZoneInfo(self.cfg.get("package_timezone", "Europe/Rome"))
@@ -273,7 +327,16 @@ def main() -> None:
     else:
         storage = DriveStorage(sa, os.environ["DRIVE_INBOX_FOLDER_ID"], os.environ["DRIVE_PUBLISHED_FOLDER_ID"])
     now = datetime.fromisoformat(args.now).replace(tzinfo=UTC) if args.now else datetime.now(UTC)
-    Publisher(cfg, storage, api, SheetLog(sa, os.environ.get("SHEET_ID")), now).run()
+    pub = Publisher(cfg, storage, api, SheetLog(sa, os.environ.get("SHEET_ID")), now)
+    pub.run()
+    try:
+        pub.verify()
+    except Exception:
+        log("verifica dei post pubblicati non riuscita:")
+        traceback.print_exc()
+    if pub.problemi and not args.dry_run:
+        log(f"{pub.problemi} problemi: controlla i messaggi qui sopra.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
