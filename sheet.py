@@ -95,32 +95,31 @@ class Dashboard:
             return
         try:
             ss = self.svc.spreadsheets().values()
-            data, appends = [], {}
+            data = []
             for tab, rows in self._upserts.items():
                 if not rows:
                     continue
                 cols = TABS[tab]
                 existing = ss.get(spreadsheetId=self.sheet_id, range=f"{tab}!A:A").execute().get("values", [])
                 index = {r[0]: i + 1 for i, r in enumerate(existing) if r}
-                new = []
+                next_row = max(len(existing), 1) + 1  # riga 1 = intestazione
                 for key, fields in rows.items():
                     if key in index:
                         for name, val in fields.items():
                             c = cols.index(name) + 1
                             data.append({"range": f"{tab}!{_col(c)}{index[key]}", "values": [[val]]})
                     else:
-                        new.append([key] + [fields.get(c, "") for c in cols[1:]])
-                if new:
-                    appends[tab] = new
+                        row = [key] + [fields.get(c, "") for c in cols[1:]]
+                        data.append({"range": f"{tab}!A{next_row}:{_col(len(cols))}{next_row}", "values": [row]})
+                        next_row += 1
+            if self._storico:
+                n = len(ss.get(spreadsheetId=self.sheet_id, range="Storico!A:A").execute().get("values", []))
+                start = max(n, 1) + 1
+                end = start + len(self._storico) - 1
+                data.append({"range": f"Storico!A{start}:{_col(len(STORICO_COLS))}{end}", "values": self._storico})
             if data:
                 ss.batchUpdate(spreadsheetId=self.sheet_id,
                                body={"valueInputOption": "USER_ENTERED", "data": data}).execute()
-            for tab, rows in appends.items():
-                ss.append(spreadsheetId=self.sheet_id, range=f"{tab}!A:A", valueInputOption="USER_ENTERED",
-                          insertDataOption="INSERT_ROWS", body={"values": rows}).execute()
-            if self._storico:
-                ss.append(spreadsheetId=self.sheet_id, range="Storico!A:A", valueInputOption="USER_ENTERED",
-                          insertDataOption="INSERT_ROWS", body={"values": self._storico}).execute()
             self.log(f"Cruscotto aggiornato ({sum(len(r) for r in self._upserts.values())} righe di stato, "
                      f"{len(self._storico)} eventi).")
         except Exception as e:
