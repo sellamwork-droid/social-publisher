@@ -10,7 +10,7 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 - Se Power chiede modifiche, la chat corregge e aspetta di nuovo "confermato".
 
 ## 1. Come funziona
-Chat (producono, Power conferma) → Drive `DA MANDARE/AXUX` e `DA MANDARE/VOLWICK` → questo repository (GitHub Actions, ogni ora) → Blotato → Instagram / YouTube (TikTok in pausa).
+Chat (producono, Power conferma) → Drive `DA MANDARE/AXUX` e `DA MANDARE/VOLWICK` → questo repository (GitHub Actions, ogni 3 ore) → Blotato → Instagram / YouTube (TikTok in pausa).
 Il sistema non manda comandi alle chat. Pubblica solo pacchetti confermati.
 
 ## 2. Cartelle su Drive (uguali per i due brand)

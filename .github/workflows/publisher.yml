@@ -2,7 +2,7 @@ name: Pubblicazione social (AXUX + VOLWICK)
 
 on:
   schedule:
-    - cron: "7 * * * *"   # ogni ora, al minuto 7
+    - cron: "17 */3 * * *"   # ogni 3 ore (risparmia i minuti gratuiti di GitHub Actions)
   workflow_dispatch:
     inputs:
       dry_run:
