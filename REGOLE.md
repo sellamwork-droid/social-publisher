@@ -76,7 +76,7 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 ## 7. Orari (fuso dell'account, si cambiano in `config.yaml`)
 | Account | AXUX | VOLWICK |
 |---|---|---|
-| IG IT (Roma) | reel1 12:45 · carosello 18:00 · reel2 20:30 | 13:00 · 18:30 · 21:00 |
+| IG IT (Roma) | reel1 14:00 · carosello 17:00 · reel2 19:00 | 15:00 · 18:00 · 20:00 |
 | IG USA (New York) | carosello 09:00 · reel1 12:00 · reel2 18:00 | 09:30 · 12:30 · 18:30 |
 | TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 | 11:30 · 14:30 · 19:30 |
 | Shorts (New York) | short1 14:00 · short2 19:00 | 14:30 · 19:30 |

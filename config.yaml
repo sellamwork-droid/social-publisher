@@ -37,7 +37,7 @@ brands:
         blotato_id: "87313"        # @axux.ita
         nome: "@axux.ita"
         timezone: Europe/Rome
-        slots: {reel1: "12:45", carosello: "18:00", reel2: "20:30", storia1: "10:00", storia2: "16:00", storia3: "19:30"}
+        slots: {reel1: "14:00", carosello: "17:00", reel2: "19:00", storia1: "10:00", storia2: "16:00", storia3: "19:30"}
       ig_us:
         platform: instagram
         blotato_id: "88313"        # @axux.officiall (Instagram USA, AdsPower)
@@ -65,7 +65,7 @@ brands:
         blotato_id: "81927"        # @volwick.ita (Instagram italiano)
         nome: "@volwick.ita"
         timezone: Europe/Rome
-        slots: {reel1: "13:00", carosello: "18:30", reel2: "21:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
+        slots: {reel1: "15:00", carosello: "18:00", reel2: "20:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
       ig_us:
         platform: instagram
         blotato_id: "88316"        # @volwick.officiall (Instagram USA, AdsPower)
