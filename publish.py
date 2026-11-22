@@ -180,6 +180,8 @@ class Publisher:
                     when, late = self.slot_time(pkg_date, acc, job.slot)
                     src = job.alt.get(acc["platform"]) or job.caption
                     caption = self._local_file(src).read_text(encoding="utf-8") if src else ""
+                    if not caption.strip():
+                        raise ValueError(f"la descrizione {src.rel if src else ''} è vuota: ogni video deve avere la sua descrizione")
                     body = self.build_post(job, acc, caption)
                     body["scheduledTime"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
                     try:

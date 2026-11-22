@@ -63,7 +63,7 @@ Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (tradu
 
 ## 5. File
 - **Video:** verticale 9:16, MP4 H.264 + AAC, 3 s – 3 min. Su TikTok il sistema mette da solo la copertina come primo frame.
-- **Copertina** `reelN_cover.png/.jpg`: verticale 1080×1920 o 4K. **Obbligatoria per i reel Instagram**: senza copertina il reel IG non esce (errore). Per YouTube e TikTok è facoltativa (YouTube la usa solo se il canale è verificato).
+- **Copertina e descrizione obbligatorie per ogni video** (regola di Power, 22 novembre 2026): `reelN_cover.png/.jpg` verticale 1080×1920 o 4K e `reelN.txt` non vuoto. Senza una delle due il video non esce su nessuna piattaforma (errore nel cruscotto e nel portale). YouTube usa la copertina solo se il canale è verificato; su TikTok diventa il primo frame.
 - **Carosello:** `01.png`, `02.png` … massimo 10 su Instagram, stesso formato (4:5 1080×1350 consigliato). Escono **nell'ordine dei numeri** (anche 1, 2, 10 sono in ordine giusto).
 - **Descrizione** `reelN.txt` / `descrizione.txt` (obbligatoria, lingua della cartella):
   - AXUX: `→ axux.com | AXUX5 · 5% OFF` / hook / hashtag

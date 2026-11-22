@@ -77,8 +77,8 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
         j = Job(f"{key_acc}:{slot}", key_acc, kind, slot, media, cap, cover, source=source)
         if not cap:
             j.problems.append(f"manca la descrizione {cap_name}")
-        if needs_cover and key_acc.startswith("ig_") and not cover:
-            j.problems.append(f"manca la copertina {slot}_cover.png (obbligatoria su Instagram)")
+        if needs_cover and not cover:  # regola di Power (22/11/2026): ogni video ha copertina e descrizione
+            j.problems.append(f"manca la copertina {(cap_name.rsplit('.', 1)[0] if cap_name else slot)}_cover.png (ogni video deve averla)")
         jobs.append(j)
 
     if tipo == "REEL":
@@ -97,7 +97,7 @@ def build_jobs(raw: dict[str, FileRef], lang: str, tipo: str) -> list[Job]:
                 if acc == "youtube":
                     if typ == "reel" and ("short", n) in videos:
                         continue
-                    add(acc, "short", f"short{n}", [f], cap, cover, raw_name(raw, f), cap_name=f"{base}.txt")
+                    add(acc, "short", f"short{n}", [f], cap, cover, raw_name(raw, f), True, f"{base}.txt")
                 else:
                     add(acc, "reel", f"reel{n}", [f], cap, cover, raw_name(raw, f), True, f"{base}.txt")
 
