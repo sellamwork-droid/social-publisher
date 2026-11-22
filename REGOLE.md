@@ -18,7 +18,7 @@ Il sistema non manda comandi alle chat. Pubblica solo cartelle confermate.
 
 ## 2. Cartelle su Drive (uguali per i due brand)
 Tutto sta in **Il mio Drive → `SOCIAL PUBLISHER`** (https://drive.google.com/drive/folders/16_d9APVUEW4C42TUUd1kcff20L9kOvWy). Non è la vecchia cartella DA MANDARE di AXUX.
-I contenuti nascono **in inglese** (EN = Instagram USA, YouTube, TikTok). L'italiano (IT) è la versione per l'Instagram italiano.
+**Prima l'italiano, poi l'inglese** (regola di Power, 22 novembre 2026, 16:20): ogni contenuto nasce in italiano (IT = Instagram italiano), Power lo approva per primo; dopo il suo Confermato la stessa chat fa la versione inglese dello stesso ID (EN = Instagram USA, YouTube, TikTok), adattata al pubblico USA, stesso slot e giorno.
 ```
 SOCIAL PUBLISHER/
   DA MANDARE/
