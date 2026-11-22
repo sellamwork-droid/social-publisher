@@ -83,4 +83,5 @@ class Blotato:
         """Cancella un post programmato e il suo invio (DELETE /v2/schedules/:id)."""
         if self.dry_run:
             return
-        self._req("DELETE", f"/schedules/{schedule_id}")
+        # senza corpo: Blotato rifiuta un DELETE con content-type JSON e corpo vuoto
+        self._req("DELETE", f"/schedules/{schedule_id}", headers={"Content-Type": None})
