@@ -112,6 +112,17 @@ class PortalStorage:
 def annulla_uscite(supa: Supa, api, cfg: dict, portale, log, solo: str = "") -> int:
     """Consegne da annullare (bottone "Annulla uscita" nel portale, oppure --annulla <ID>):
     cancella su Blotato i post già programmati e segna la consegna come annullata."""
+    # uscite rimaste "programmate" di consegne già annullate: si allineano
+    try:
+        vive = supa.get("pub_post", select="chiave,consegna_id", stato="eq.programmato", consegna_id="not.is.null")
+        if vive:
+            ann = {r["id"] for r in supa.get("pub_consegne", select="id", stato="eq.annullato",
+                                               id=f"in.({','.join(sorted({v['consegna_id'] for v in vive}))})")}
+            for v in vive:
+                if v["consegna_id"] in ann:
+                    supa.patch("pub_post", {"chiave": v["chiave"]}, {"stato": "annullato", "motivo": "uscita annullata da Power"})
+    except Exception as e:
+        log(f"(allineamento uscite annullate non riuscito: {str(e)[:200]})")
     righe = supa.get("pub_consegne", select="*", stato="eq.da_annullare")
     if solo:
         righe += [r for r in supa.get("pub_consegne", select="*", stato="in.(confermato,programmato)")
@@ -140,8 +151,10 @@ def annulla_uscite(supa: Supa, api, cfg: dict, portale, log, solo: str = "") -> 
             (cancellati if trovati else falliti).append(key)
             rec["stato"] = "annullato" if trovati else rec["stato"]
             nome_pkg = f"{r['lingua']}/{r['tipo']}/{r['uscita']}~{r['id'][:8]}"
-            if trovati:
-                portale.post(f"{brand}|{nome_pkg}|{key}", stato="annullato", motivo="uscita annullata da Power")
+            if trovati:  # la riga dell'uscita esiste già: si aggiorna solo lo stato
+                supa.patch("pub_post", {"chiave": f"{brand}|{nome_pkg}|{key}"},
+                           {"stato": "annullato", "motivo": "uscita annullata da Power",
+                            "aggiornato": datetime.now(timezone.utc).isoformat()})
         nota = "Uscita annullata" + (f": cancellati su Blotato {', '.join(cancellati)}" if cancellati else "")
         if falliti:
             nota += f". Non trovati su Blotato (forse già usciti): {', '.join(falliti)}"
