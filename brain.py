@@ -112,7 +112,7 @@ class Brain:
             for i in range(7):
                 d = today + timedelta(days=i)
                 label = ("OGGI " if i == 0 else "domani " if i == 1 else "") + f"{GIORNI[d.weekday()]} {d:%d/%m}"
-                row = [label, brand]
+                row = ["'" + label, brand]  # apostrofo: Sheets non lo trasforma in data
                 for lang, tipo in (("EN", "REEL"), ("EN", "CAROSELLI"), ("IT", "REEL"), ("IT", "CAROSELLI")):
                     row.append(self._cella(pk.get(f"{lang}/{tipo}/{d.isoformat()}")))
                 rows.append(row)
