@@ -357,6 +357,7 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--local", nargs=2, metavar=("DA_MANDARE", "PUBBLICATI"))
     ap.add_argument("--accounts", action="store_true")
+    ap.add_argument("--annulla", default="", help="ID contenuto (A0002) o consegna da togliere dai programmati")
     ap.add_argument("--now", help="per i test: data/ora ISO in UTC")
     ap.add_argument("--config", default=str(Path(__file__).with_name("config.yaml")))
     args = ap.parse_args()
@@ -392,6 +393,13 @@ def main() -> None:
     pub = Publisher(cfg, storage, api, Dashboard(None if args.dry_run else sa, sheet_id, log), now)
     if supa and not args.dry_run:
         pub.portale = Portale(supa, log)
+    if supa and not args.dry_run:
+        try:
+            from portale import annulla_uscite
+            annulla_uscite(supa, api, cfg, pub.portale, log, args.annulla.strip())
+        except Exception:
+            log("annullamento non riuscito:")
+            traceback.print_exc()
     try:
         pub.check_accounts()
     except Exception:

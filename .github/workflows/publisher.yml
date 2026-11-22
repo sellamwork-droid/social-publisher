@@ -9,6 +9,10 @@ on:
         description: "Solo prova (non carica e non programma nulla)"
         type: boolean
         default: true
+      annulla:
+        description: "Togli dai programmati questo contenuto (ID, es. A0002)"
+        type: string
+        default: ""
       simula_data:
         description: "Fingi che sia questa data/ora UTC (es. 2026-12-30T08:00:00): prende i pacchetti di quei giorni. Vuoto = adesso"
         type: string
@@ -50,5 +54,6 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
             if [ -n "${{ inputs.simula_data }}" ]; then ARGS="$ARGS --now ${{ inputs.simula_data }}"; fi
+            if [ -n "${{ inputs.annulla }}" ]; then ARGS="$ARGS --annulla ${{ inputs.annulla }}"; fi
           fi
           python publish.py $ARGS

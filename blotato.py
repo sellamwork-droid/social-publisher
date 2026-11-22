@@ -66,3 +66,21 @@ class Blotato:
 
     def post_status(self, submission_id: str) -> dict:
         return self._req("GET", f"/posts/{submission_id}")
+
+    def schedules(self) -> list[dict]:
+        """Post programmati nel futuro (GET /v2/schedules, a pagine)."""
+        out, cursor = [], None
+        for _ in range(50):
+            params = {"limit": 100, **({"cursor": cursor} if cursor else {})}
+            r = self._req("GET", "/schedules", params=params)
+            out += r.get("items", [])
+            cursor = r.get("cursor")
+            if not cursor:
+                break
+        return out
+
+    def delete_schedule(self, schedule_id: str) -> None:
+        """Cancella un post programmato e il suo invio (DELETE /v2/schedules/:id)."""
+        if self.dry_run:
+            return
+        self._req("DELETE", f"/schedules/{schedule_id}")

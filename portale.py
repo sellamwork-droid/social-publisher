@@ -109,6 +109,49 @@ class PortalStorage:
             self.db.patch("pub_consegne", {"id": ref}, {"stato": "programmato", "nota_sistema": ""})
 
 
+def annulla_uscite(supa: Supa, api, cfg: dict, portale, log, solo: str = "") -> int:
+    """Consegne da annullare (bottone "Annulla uscita" nel portale, oppure --annulla <ID>):
+    cancella su Blotato i post già programmati e segna la consegna come annullata."""
+    righe = supa.get("pub_consegne", select="*", stato="eq.da_annullare")
+    if solo:
+        righe += [r for r in supa.get("pub_consegne", select="*", stato="in.(confermato,programmato)")
+                  if solo in (r.get("contenuto_id"), r["id"], r["id"][:8])]
+    if not righe:
+        return 0
+    programmati = None
+    n = 0
+    for r in righe:
+        brand = r["brand"]
+        accounts = cfg["brands"][brand]["accounts"]
+        stato = r.get("stato_post") or {}
+        cancellati, falliti = [], []
+        for key, rec in stato.items():
+            if rec.get("stato") != "programmato":
+                continue
+            acc = accounts.get(rec.get("account") or key.split(":")[0], {})
+            quando = rec.get("quando", "")
+            if programmati is None:
+                programmati = api.schedules()
+            trovati = [x for x in programmati
+                       if str((x.get("account") or {}).get("id") or (x.get("draft") or {}).get("accountId")) == str(acc.get("blotato_id"))
+                       and (x.get("scheduledAt") or "").replace("-", "").replace("T", "").replace(":", "")[:12] == quando]
+            for x in trovati:
+                api.delete_schedule(x["id"])
+            (cancellati if trovati else falliti).append(key)
+            rec["stato"] = "annullato" if trovati else rec["stato"]
+            nome_pkg = f"{r['lingua']}/{r['tipo']}/{r['uscita']}~{r['id'][:8]}"
+            if trovati:
+                portale.post(f"{brand}|{nome_pkg}|{key}", stato="annullato", motivo="uscita annullata da Power")
+        nota = "Uscita annullata" + (f": cancellati su Blotato {', '.join(cancellati)}" if cancellati else "")
+        if falliti:
+            nota += f". Non trovati su Blotato (forse già usciti): {', '.join(falliti)}"
+        supa.patch("pub_consegne", {"id": r["id"]}, {"stato": "annullato", "stato_post": stato, "nota_sistema": nota[:500],
+                                                      "aggiornato": datetime.now(timezone.utc).isoformat()})
+        log(f"[{brand} {r.get('contenuto_id') or r['id'][:8]} {r['lingua']}] {nota}")
+        n += 1
+    return n
+
+
 class MultiStorage:
     """Drive (chat su claude.ai) + portale insieme. I riferimenti portano il prefisso della fonte."""
 
