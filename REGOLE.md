@@ -6,6 +6,9 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 ## Portale Studio Hub (dal 22 novembre 2026)
 Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat per brand e tipologia (Claude Code sul Mac), consegne con anteprima, bottone **Confermato**, uscite e numeri. Una consegna confermata nel portale esce da sola entro 15 minuti, con le stesse regole di questo file (nomi, copertina, orari, account). Le chat su claude.ai continuano a usare le cartelle di Drive qui sotto.
 
+## Profili inglesi in pausa (Power, 23 novembre 2026, 17:26)
+Instagram USA (@axux.officiall, @volwick.officiall) e YouTube (Media axux, Volwick Official) sono **offline finché Power non dice di riattivarli**: in `config.yaml` hanno `paused: true` e il sistema non programma niente su di loro (le uscite già programmate si tolgono con **Annulla** nel portale). Le chat non fanno versioni inglesi in questo periodo. Per riattivarli: togliere le righe `paused` e dirlo alle chat.
+
 ## 0. Regola n.1 — si pubblica solo ciò che Power conferma
 - La chat mostra a Power video, copertine, descrizioni e caroselli, poi aspetta.
 - Solo quando Power scrive **"confermato"** la chat salva il contenuto su Drive nella sua cartella (vedi sotto) e ci aggiunge il file vuoto **`CONFERMATO.txt`**.

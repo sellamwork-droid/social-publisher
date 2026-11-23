@@ -40,6 +40,7 @@ brands:
         slots: {reel1: "14:00", carosello: "17:00", reel2: "19:00", storia1: "10:00", storia2: "16:00", storia3: "19:30"}
       ig_us:
         platform: instagram
+        paused: true               # Power, 23/11 17:26: profili inglesi offline finché non lo dice lui (togliere questa riga per riattivarlo)
         blotato_id: "88313"        # @axux.officiall (Instagram USA, AdsPower)
         nome: "@axux.officiall"
         timezone: America/New_York
@@ -53,6 +54,7 @@ brands:
         slots: {carosello: "11:00", reel1: "14:00", reel2: "19:00"}
       youtube:
         platform: youtube
+        paused: true               # Power, 23/11 17:26: profili inglesi offline finché non lo dice lui (togliere questa riga per riattivarlo)
         blotato_id: "58952"        # Media axux (Axux)
         nome: "YouTube Media axux"
         timezone: America/New_York
@@ -68,6 +70,7 @@ brands:
         slots: {reel1: "15:00", carosello: "18:00", reel2: "20:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
       ig_us:
         platform: instagram
+        paused: true               # Power, 23/11 17:26: profili inglesi offline finché non lo dice lui (togliere questa riga per riattivarlo)
         blotato_id: "88316"        # @volwick.officiall (Instagram USA, AdsPower)
         nome: "@volwick.officiall"
         timezone: America/New_York
@@ -81,6 +84,7 @@ brands:
         slots: {carosello: "11:30", reel1: "14:30", reel2: "19:30"}
       youtube:
         platform: youtube
+        paused: true               # Power, 23/11 17:26: profili inglesi offline finché non lo dice lui (togliere questa riga per riattivarlo)
         blotato_id: "55432"        # Volwick Official
         nome: "YouTube Volwick Official"
         timezone: America/New_York
