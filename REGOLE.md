@@ -6,8 +6,10 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 ## Portale Studio Hub (dal 22 novembre 2026)
 Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat per brand e tipologia (Claude Code sul Mac), consegne con anteprima, bottone **Confermato**, uscite e numeri. Una consegna confermata nel portale esce da sola entro 15 minuti, con le stesse regole di questo file (nomi, copertina, orari, account). Le chat su claude.ai continuano a usare le cartelle di Drive qui sotto.
 
-## Profili inglesi in pausa (Power, 23 novembre 2026, 17:26)
-Instagram USA (@axux.officiall, @volwick.officiall) e YouTube (Media axux, Volwick Official) sono **offline finché Power non dice di riattivarli**: in `config.yaml` hanno `paused: true` e il sistema non programma niente su di loro (le uscite già programmate si tolgono con **Annulla** nel portale). Le chat non fanno versioni inglesi in questo periodo. Per riattivarli: togliere le righe `paused` e dirlo alle chat.
+## Instagram USA in pausa, inglese confermato da Power (23 novembre 2026, 17:26-17:30)
+- **Instagram USA** (@axux.officiall, @volwick.officiall) è **offline finché Power non dice di riattivarlo**: in `config.yaml` ha `paused: true` e il sistema non programma niente lì. **YouTube inglese resta attivo.**
+- **L'inglese non esce più da solo**: dopo il Confermato dell'italiano la chat fa la versione inglese (rivista da un revisore madrelingua separato) e la consegna; Power la trova in Approva, sezione Inglese, e la conferma lui. Su claude.ai: la cartella EN prende `CONFERMATO.txt` solo dopo il «confermato» di Power sulla versione inglese.
+- Per riattivare Instagram USA: togliere le righe `paused` di `ig_us` e dirlo alle chat.
 
 ## 0. Regola n.1 — si pubblica solo ciò che Power conferma
 - La chat mostra a Power video, copertine, descrizioni e caroselli, poi aspetta.
