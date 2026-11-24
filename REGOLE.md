@@ -6,10 +6,13 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 ## Portale Studio Hub (dal 22 novembre 2026)
 Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat per brand e tipologia (Claude Code sul Mac), consegne con anteprima, bottone **Confermato**, uscite e numeri. Una consegna confermata nel portale esce da sola entro 15 minuti, con le stesse regole di questo file (nomi, copertina, orari, account). Le chat su claude.ai continuano a usare le cartelle di Drive qui sotto.
 
-## Instagram USA in pausa, inglese confermato da Power (23 novembre 2026, 17:26-17:30)
-- **Instagram USA** (@axux.officiall, @volwick.officiall) è **offline finché Power non dice di riattivarlo**: in `config.yaml` ha `paused: true` e il sistema non programma niente lì. **YouTube inglese resta attivo.**
-- **L'inglese non esce più da solo**: dopo il Confermato dell'italiano la chat fa la versione inglese (rivista da un revisore madrelingua separato) e la consegna; Power la trova in Approva, sezione Inglese, e la conferma lui. Su claude.ai: la cartella EN prende `CONFERMATO.txt` solo dopo il «confermato» di Power sulla versione inglese.
-- Per riattivare Instagram USA: togliere le righe `paused` di `ig_us` e dirlo alle chat.
+## Dal 26 novembre: Instagram USA riparte, TikTok in italiano (Power, 25 novembre 2026, 00:15)
+- «Pubblichiamo anche sugli ig in inglese quando approvo le cose inglesi, ma partendo dal 26 novembre, e anche i tik tok italiani vanno usati per lingua ita per ora.»
+- **Instagram USA** (@axux.officiall, @volwick.officiall) riparte con le uscite **dal 26 novembre**: l'inglese che Power conferma va su Instagram USA e YouTube. Prima del 26 resta fermo (`dal: "2026-11-26"` in `config.yaml`).
+- **TikTok** (@axux.official, @volwick.official) per ora pubblica **l'italiano**, dalle uscite del 26 novembre, agli stessi orari di Instagram Italia. L'inglese non va più su TikTok.
+- **L'inglese non esce mai da solo** (23/11): dopo il Confermato dell'italiano la chat fa la versione inglese (rivista da un revisore madrelingua separato) e la consegna; Power la trova in Approva, sezione Inglese, e la conferma lui. Su claude.ai: la cartella EN prende `CONFERMATO.txt` solo dopo il «confermato» di Power sulla versione inglese.
+- I pacchetti del 26 e dopo già programmati prima del cambio ricevono da soli i post nuovi (Instagram USA, TikTok): non serve rifare nulla.
+- (Prima: dal 23/11 17:26 Instagram USA e TikTok in pausa, YouTube inglese attivo.)
 
 ## 0. Regola n.1 — si pubblica solo ciò che Power conferma
 - La chat mostra a Power video, copertine, descrizioni e caroselli, poi aspetta.
@@ -18,12 +21,14 @@ Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat p
 - Se Power chiede modifiche, la chat corregge e aspetta di nuovo "confermato".
 
 ## 1. Come funziona
-Chat (producono, Power conferma) → Drive `DA MANDARE/<BRAND>/<LINGUA>/<TIPO>/<data>/` → questo repository (GitHub Actions, ogni 3 ore) → Blotato → Instagram / YouTube (TikTok in pausa).
+Chat (producono, Power conferma) → Drive `DA MANDARE/<BRAND>/<LINGUA>/<TIPO>/<data>/` → questo repository (GitHub Actions, ogni 3 ore) → Blotato → Instagram / YouTube / TikTok.
+
+**Regola di Power del 25 novembre 2026 (00:15):** «pubblichiamo anche sugli ig in inglese quando approvo le cose inglesi, ma partendo dal 26 novembre, e anche i tik tok italiani vanno usati per lingua ita per ora». Dalle uscite del **26 novembre**: l'inglese confermato da Power va su **Instagram USA** (.officiall) e YouTube; l'italiano va su **Instagram italiano e TikTok** (@axux.official, @volwick.official), allo stesso orario. Prima del 26 TikTok e Instagram USA non pubblicano; i pacchetti del 26 e dopo già programmati ricevono da soli i post nuovi.
 Il sistema non manda comandi alle chat. Pubblica solo cartelle confermate.
 
 ## 2. Cartelle su Drive (uguali per i due brand)
 Tutto sta in **Il mio Drive → `SOCIAL PUBLISHER`** (https://drive.google.com/drive/folders/16_d9APVUEW4C42TUUd1kcff20L9kOvWy). Non è la vecchia cartella DA MANDARE di AXUX.
-**Prima l'italiano, poi l'inglese** (regola di Power, 22 novembre 2026, 16:20): ogni contenuto nasce in italiano (IT = Instagram italiano), Power lo approva per primo; dopo il suo Confermato la stessa chat fa la versione inglese dello stesso ID (EN = Instagram USA, YouTube, TikTok), adattata al pubblico USA, stesso slot e giorno.
+**Prima l'italiano, poi l'inglese** (regola di Power, 22 novembre 2026, 16:20): ogni contenuto nasce in italiano (IT = Instagram italiano), Power lo approva per primo; dopo il suo Confermato la stessa chat fa la versione inglese dello stesso ID (EN = Instagram USA e YouTube; TikTok per ora è in italiano), adattata al pubblico USA, stesso slot e giorno.
 ```
 SOCIAL PUBLISHER/
   DA MANDARE/
@@ -56,17 +61,17 @@ Il sistema prende le cartelle di oggi e dei 2 giorni dopo. Le altre cartelle su 
 ## 3. Dove va ogni cartella
 | Cartella | Va su |
 |---|---|
-| `EN/REEL` | Instagram USA (.officiall) + YouTube Shorts + TikTok (in pausa) |
-| `IT/REEL` | Instagram italiano |
-| `EN/CAROSELLI` | Instagram USA + TikTok (carosello foto, in pausa) |
-| `IT/CAROSELLI` | Instagram italiano |
+| `EN/REEL` | Instagram USA (.officiall, dalle uscite del 26/11) + YouTube Shorts |
+| `IT/REEL` | Instagram italiano + TikTok (dalle uscite del 26/11) |
+| `EN/CAROSELLI` | Instagram USA (dal 26/11) |
+| `IT/CAROSELLI` | Instagram italiano + TikTok (carosello foto, dal 26/11) |
 | `EN/STORIE`, `IT/STORIE` (facoltative, `storia1.png/.mp4`…) | storia Instagram USA / italiano |
 
 Storie: per ora le fa Power a mano. Se si usano le cartelle STORIE escono **senza link sticker** (Meta non lo permette via API).
 
 ## 4. Volume per brand al giorno
 Regola di Power del 24 novembre 2026 (02:51): **3 reel + 1 carosello al giorno per brand, e il piano si riempie sempre da solo** (piano automatico del portale acceso).
-Instagram IT: 3 reel + 1 carosello · Instagram USA: 3 reel + 1 carosello (in pausa) · TikTok: 3 reel + 1 carosello (in pausa) · YouTube Shorts: 3.
+Instagram IT: 3 reel + 1 carosello · TikTok (italiano, dal 26/11): 3 reel + 1 carosello · Instagram USA (dal 26/11): 3 reel + 1 carosello · YouTube Shorts: 3.
 
 ## 5. File
 - **Video:** verticale 9:16, MP4 H.264 + AAC, 3 s – 3 min. Su TikTok il sistema mette da solo la copertina come primo frame.
@@ -80,10 +85,12 @@ Instagram IT: 3 reel + 1 carosello · Instagram USA: 3 reel + 1 carosello (in pa
   - Facoltativo, per un testo diverso su una piattaforma: `reel1.youtube.txt`, `reel1.tiktok.txt`, `reel1.instagram.txt` (per i caroselli `descrizione.tiktok.txt`…). Senza, vale il `.txt` normale.
 
 ## 6. Account (ID Blotato in `config.yaml`)
-| Brand | Instagram IT | Instagram USA | TikTok (EN) | YouTube (EN) |
+| Brand | Instagram IT | TikTok (per ora IT) | Instagram USA | YouTube (EN) |
 |---|---|---|---|---|
-| AXUX | @axux.ita | @axux.officiall | @axux.official (in pausa) | Media axux (non verificato: niente copertina) |
-| VOLWICK | @volwick.ita | @volwick.officiall | @volwick.official (in pausa) | Volwick Official |
+| AXUX | @axux.ita | @axux.official (dal 26/11) | @axux.officiall (dal 26/11) | Media axux (non verificato: niente copertina) |
+| VOLWICK | @volwick.ita | @volwick.official (dal 26/11) | @volwick.officiall (dal 26/11) | Volwick Official |
+
+In `config.yaml`, `dal: "AAAA-MM-GG"` su un account = pubblica solo i pacchetti da quel giorno; `paused: true` = fermo. Dove va ogni lingua: `plan.py`, `TARGETS`.
 
 Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con proxy USA.
 
@@ -92,7 +99,7 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 |---|---|---|
 | IG IT (Roma) | reel1 14:00 · carosello 17:00 · reel2 19:00 · reel3 21:00 | 15:00 · 18:00 · 20:00 · 22:00 |
 | IG USA (New York) | carosello 09:00 · reel1 12:00 · reel2 18:00 · reel3 21:00 | 09:30 · 12:30 · 18:30 · 21:30 |
-| TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 · reel3 21:00 | 11:30 · 14:30 · 19:30 · 21:30 |
+| TikTok (Roma, come IG IT) | reel1 14:00 · carosello 17:00 · reel2 19:00 · reel3 21:00 | 15:00 · 18:00 · 20:00 · 22:00 |
 | Shorts (New York) | short1 14:00 · short2 19:00 · short3 21:00 | 14:30 · 19:30 · 21:30 |
 
 ## 8. Controllo e centro di controllo

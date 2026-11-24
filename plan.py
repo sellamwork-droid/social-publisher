@@ -57,9 +57,12 @@ LANGS = ("EN", "IT")
 TIPI = ("REEL", "CAROSELLI", "STORIE")
 PLATFORMS = ("instagram", "tiktok", "youtube")
 MAX_HASHTAGS = {"instagram": 5, "tiktok": 5, "youtube": 15}  # IG e TikTok: limite di 5 dal dic. 2025
-TARGETS = {  # (lingua, tipo) -> account
-    ("EN", "REEL"): ["ig_us", "tiktok", "youtube"], ("IT", "REEL"): ["ig_it"],
-    ("EN", "CAROSELLI"): ["ig_us", "tiktok"], ("IT", "CAROSELLI"): ["ig_it"],
+# (lingua, tipo) -> account. Power, 25/11/2026 00:15: «pubblichiamo anche sugli ig in inglese quando approvo le cose inglesi,
+# ma partendo dal 26 novembre, e anche i tik tok italiani vanno usati per lingua ita per ora»: TikTok passa all'italiano.
+# Da quando ogni account parte lo dice config.yaml («dal»).
+TARGETS = {
+    ("EN", "REEL"): ["ig_us", "youtube"], ("IT", "REEL"): ["ig_it", "tiktok"],
+    ("EN", "CAROSELLI"): ["ig_us"], ("IT", "CAROSELLI"): ["ig_it", "tiktok"],
     ("EN", "STORIE"): ["ig_us"], ("IT", "STORIE"): ["ig_it"],
 }
 _SUFFIX = re.compile(r"_(IT|EN)(?=(_cover)?\.[A-Za-z0-9]+$)", re.I)

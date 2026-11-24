@@ -31,7 +31,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from blotato import Blotato  # noqa: E402
 from media import cover_jpeg, prepend_cover_frame  # noqa: E402
-from plan import adapt_caption, parse_ids, Job, build_jobs, parse_caption  # noqa: E402
+from plan import adapt_caption, parse_ids, Job, build_jobs, parse_caption, TARGETS  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 from sheet import Dashboard  # noqa: E402
 
@@ -78,6 +78,22 @@ class Publisher:
         return self._upload(("cover", job.cover.ref), jpg)
 
     # ---------- orari
+    @staticmethod
+    def motivo_fermo(acc: dict | None, pkg_date: date) -> str:
+        """perché un account non pubblica un pacchetto di quel giorno ("" = pubblica)"""
+        if acc and acc.get("paused"):
+            return "account in pausa (config.yaml)"
+        if not acc or not acc.get("blotato_id"):
+            return "account non collegato su Blotato"
+        if acc.get("dal") and pkg_date < date.fromisoformat(str(acc["dal"])):
+            return f"account attivo dal {acc['dal']} (config.yaml)"
+        return ""
+
+    @staticmethod
+    def riprendibile(prev: dict) -> bool:
+        """saltato solo perché l'account era fermo: si rifà quando l'account parte (Power, 25/11: IG USA e TikTok dal 26/11)"""
+        return prev.get("stato") == "saltato" and str(prev.get("motivo", "")).startswith(("account in pausa", "account attivo dal"))
+
     def slot_time(self, pkg_date: date, acc: dict, slot: str) -> tuple[datetime, bool]:
         hhmm = acc["slots"].get(slot)
         if not hhmm:
@@ -145,7 +161,8 @@ class Publisher:
                          "target": target}}
 
     # ---------- pacchetto
-    def run_package(self, brand: str, bcfg: dict, pkg_name: str, pkg_ref: str) -> None:
+    def run_package(self, brand: str, bcfg: dict, pkg_name: str, pkg_ref: str, solo_nuovi: bool = False) -> None:
+        """solo_nuovi: pacchetto già programmato o pubblicato, si fanno solo i post nuovi (un account partito dopo)"""
         lang, tipo, day = pkg_name.split("/")
         day = day.split("~")[0]  # pacchetti del portale: EN/REEL/2026-11-23~ab12cd34
         pkg_date = date.fromisoformat(day)
@@ -161,19 +178,25 @@ class Publisher:
         if not jobs:
             log(f"[{brand} {pkg_name}] nessun file riconosciuto (controlla i nomi)")
             return
-        log(f"[{brand} {pkg_name}] {len(jobs)} post nel pacchetto")
+        if solo_nuovi:
+            jobs = [j for j in jobs if (not state.get(j.key) or self.riprendibile(state[j.key]))
+                    and not self.motivo_fermo(bcfg["accounts"].get(j.account), pkg_date)]
+            if not jobs:
+                return
+            log(f"[{brand} {pkg_name}] già programmato: {len(jobs)} post nuovi ({', '.join(j.key for j in jobs)})")
+        else:
+            log(f"[{brand} {pkg_name}] {len(jobs)} post nel pacchetto")
 
         for job in jobs:
             prev = state.get(job.key, {})
-            if prev.get("stato") in DONE:
-                continue
             acc = bcfg["accounts"].get(job.account)
+            fermo = self.motivo_fermo(acc, pkg_date)
+            if prev.get("stato") in DONE and not (self.riprendibile(prev) and not fermo):
+                continue
             rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat(), "cid": job.cid}
             try:
-                if acc and acc.get("paused"):
-                    rec.update(stato="saltato", motivo="account in pausa (config.yaml)")
-                elif not acc or not acc.get("blotato_id"):
-                    rec.update(stato="saltato", motivo="account non collegato su Blotato")
+                if fermo:
+                    rec.update(stato="saltato", motivo=fermo)
                 elif job.problems:
                     rec.update(stato="errore", motivo="; ".join(job.problems))
                 else:
@@ -231,7 +254,7 @@ class Publisher:
                 self.sheet.event([it_time(self.now), brand, day, nome, f"{job.kind} {lang}", f"{lang}/{tipo}/{job.source}", uscita_it,
                                   rec["stato"], rec.get("postSubmissionId", ""), rec.get("motivo", rec.get("nota", ""))])
 
-        if all(state.get(j.key, {}).get("stato") in DONE for j in jobs) and not self.api.dry_run:
+        if not solo_nuovi and all(state.get(j.key, {}).get("stato") in DONE for j in jobs) and not self.api.dry_run:
             try:
                 self.storage.move_to_published(brand, pkg_name, pkg_ref)
                 log(f"[{brand} {pkg_name}] completo: spostato in PUBBLICATI")
@@ -349,6 +372,24 @@ class Publisher:
                     self.run_package(brand, bcfg, name, ref)
                 except Exception:
                     log(f"[{brand} {name}] errore nel pacchetto:")
+                    traceback.print_exc()
+            # pacchetti già programmati o pubblicati di oggi e dei prossimi giorni: i post per un account partito dopo
+            # (Power, 25/11: Instagram USA e TikTok italiano dal 26/11) si aggiungono senza rifare gli altri
+            for name, ref in sorted(self.storage.published_packages(brand).items()):
+                try:
+                    d = date.fromisoformat(name.rsplit("/", 1)[-1].split("~")[0])
+                except ValueError:
+                    continue
+                if not (today <= d <= last):
+                    continue
+                lang, tipo = name.split("/")[:2]
+                da_fare = [a for a in TARGETS.get((lang.upper(), tipo.upper()), []) if not self.motivo_fermo(bcfg["accounts"].get(a), d)]
+                if not da_fare:
+                    continue
+                try:
+                    self.run_package(brand, bcfg, name, ref, solo_nuovi=True)
+                except Exception:
+                    log(f"[{brand} {name}] errore nel pacchetto già programmato:")
                     traceback.print_exc()
 
 
