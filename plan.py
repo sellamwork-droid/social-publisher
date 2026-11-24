@@ -146,9 +146,12 @@ def parse_ids(text: str, jobs: list[Job]) -> None:
     """ID.txt: 'reel1=A0012' una riga per reel, oppure un solo ID (carosello)."""
     pairs = dict(re.findall(r"(?im)^\s*((?:reel|short|storia)\d+)\s*=\s*([A-Za-z]+\d+)", text))
     single = re.findall(r"(?m)^\s*([A-Za-z]+\d+)\s*$", text)
+    # un solo ID nella cartella (una cartella = un video): vale anche se il portale ha spostato il video in un altro posto
+    # del giorno (reel3.mp4 diventato reel1.mp4, ID.txt ancora «reel3=A0009»: Power, 24/11, il primo posto libero)
+    unico = next(iter(set(pairs.values()))) if len(set(pairs.values())) == 1 else ""
     for j in jobs:
         n = re.sub(r"^short", "reel", j.slot)
-        j.cid = pairs.get(j.slot) or pairs.get(n) or (single[0] if single else "")
+        j.cid = pairs.get(j.slot) or pairs.get(n) or (single[0] if single else "") or unico
 
 
 def adapt_caption(text: str, platform: str) -> str:
