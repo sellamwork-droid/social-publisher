@@ -39,6 +39,7 @@ La data è il **giorno di uscita**. Reel e caroselli si confermano separatamente
 ```
 reel1.mp4   reel1.txt   reel1_cover.png
 reel2.mp4   reel2.txt   reel2_cover.png
+reel3.mp4   reel3.txt   reel3_cover.png
 ID.txt                                     ← reel1=A0012 (una riga per reel): lega i post ai numeri
 short1.mp4  short1.txt  short1_cover.png   ← solo EN, facoltativo: altrimenti su YouTube va reel1
 CONFERMATO.txt
@@ -64,7 +65,8 @@ Il sistema prende le cartelle di oggi e dei 2 giorni dopo. Le altre cartelle su 
 Storie: per ora le fa Power a mano. Se si usano le cartelle STORIE escono **senza link sticker** (Meta non lo permette via API).
 
 ## 4. Volume per brand al giorno
-Instagram IT: 2 reel + 1 carosello · Instagram USA: 2 reel + 1 carosello (traduzione esatta dell'IT) · TikTok: 2 reel + 1 carosello (in pausa) · YouTube Shorts: 2.
+Regola di Power del 24 novembre 2026 (02:51): **3 reel + 1 carosello al giorno per brand, e il piano si riempie sempre da solo** (piano automatico del portale acceso).
+Instagram IT: 3 reel + 1 carosello · Instagram USA: 3 reel + 1 carosello (in pausa) · TikTok: 3 reel + 1 carosello (in pausa) · YouTube Shorts: 3.
 
 ## 5. File
 - **Video:** verticale 9:16, MP4 H.264 + AAC, 3 s – 3 min. Su TikTok il sistema mette da solo la copertina come primo frame.
@@ -88,10 +90,10 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 ## 7. Orari (fuso dell'account, si cambiano in `config.yaml`)
 | Account | AXUX | VOLWICK |
 |---|---|---|
-| IG IT (Roma) | reel1 14:00 · carosello 17:00 · reel2 19:00 | 15:00 · 18:00 · 20:00 |
-| IG USA (New York) | carosello 09:00 · reel1 12:00 · reel2 18:00 | 09:30 · 12:30 · 18:30 |
-| TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 | 11:30 · 14:30 · 19:30 |
-| Shorts (New York) | short1 14:00 · short2 19:00 | 14:30 · 19:30 |
+| IG IT (Roma) | reel1 14:00 · carosello 17:00 · reel2 19:00 · reel3 21:00 | 15:00 · 18:00 · 20:00 · 22:00 |
+| IG USA (New York) | carosello 09:00 · reel1 12:00 · reel2 18:00 · reel3 21:00 | 09:30 · 12:30 · 18:30 · 21:30 |
+| TikTok (New York) | carosello 11:00 · reel1 14:00 · reel2 19:00 · reel3 21:00 | 11:30 · 14:30 · 19:30 · 21:30 |
+| Shorts (New York) | short1 14:00 · short2 19:00 · short3 21:00 | 14:30 · 19:30 · 21:30 |
 
 ## 8. Controllo e centro di controllo
 - **Prima del "confermato"** la chat lancia il controllo automatico del cervello del brand (`cervello.py pacchetto …`): con un errore il contenuto non si mostra a Power.
