@@ -70,7 +70,8 @@ Il sistema prende le cartelle di oggi e dei 2 giorni dopo. Le altre cartelle su 
 Storie: per ora le fa Power a mano. Se si usano le cartelle STORIE escono **senza link sticker** (Meta non lo permette via API).
 
 ## 4. Volume per brand al giorno
-Regola di Power del 24 novembre 2026 (02:51): **3 reel + 1 carosello al giorno per brand, e il piano si riempie sempre da solo** (piano automatico del portale acceso).
+Regola di Power del 24 novembre 2026 (02:51): **3 reel + 1 carosello al giorno per brand**. Dal 25/11 00:50 il piano automatico del portale è spento (Power: «per ora teniamo tutto manuale»): i giorni vuoti si chiedono dalla Regia.
+**Il giorno giusto e nessun giorno scoperto** (Power, 25/11 02:04: «noi dobbiamo pubblicare ogni giorno»; «quando il video dice oggi venerdì 27, oppure domani ci sarà questo, deve già andarsi a posizionare sulla data giusta»): un contenuto che parla di un giorno (oggi, domani, «venerdì 27», un dato con la sua data, anche in descrizione o a schermo) va nella cartella del giorno in cui quelle parole sono vere; nel portale lo fa da solo (`"data_fissa": true` in consegna.json, giorno e data scritti per esteso). Gli altri il portale li mette nel primo posto libero da oggi, prima i giorni vuoti più vicini; su Drive la chat sceglie la prima cartella-data con il posto libero.
 Instagram IT: 3 reel + 1 carosello · TikTok (italiano, dal 26/11): 3 reel + 1 carosello · Instagram USA (dal 26/11): 3 reel + 1 carosello · YouTube Shorts: 3.
 
 ## 5. File
