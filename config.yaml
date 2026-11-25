@@ -10,6 +10,7 @@ drive:                     # Google Drive: "SOCIAL PUBLISHER" (Il mio Drive di s
 lookahead_days: 2          # programma i pacchetti di oggi e dei prossimi 2 giorni
 package_timezone: Europe/Rome   # fuso usato per leggere la data nel nome della cartella
 late_publish_minutes: 10   # se uno slot è già passato, pubblica tra 10 minuti
+late_max_minutes: 120      # ma solo se è passato da meno di 2 ore: oltre non esce, il portale lo rimette nel primo posto libero (Power, 25/11 03:07)
 
 defaults:
   tiktok:

@@ -54,6 +54,7 @@ class Publisher:
         self.tmp = Path(tempfile.mkdtemp(prefix="pub_"))
         self._uploads: dict[tuple, str] = {}
         self.problemi = 0  # errori e post falliti: se > 0 la corsa finisce in rosso (GitHub manda una email)
+        self.troppo_tardi = 0  # post non pubblicati perché il loro orario è passato da troppo (il portale li sposta)
         self._local: dict[str, Path] = {}
         from portale import Portale
         self.portale = Portale(None, log)  # sostituito in main() se il portale è collegato
@@ -93,6 +94,15 @@ class Publisher:
     def riprendibile(prev: dict) -> bool:
         """saltato solo perché l'account era fermo: si rifà quando l'account parte (Power, 25/11: IG USA e TikTok dal 26/11)"""
         return prev.get("stato") == "saltato" and str(prev.get("motivo", "")).startswith(("account in pausa", "account attivo dal"))
+
+    def ritardo_minuti(self, pkg_date: date, acc: dict, slot: str) -> int | None:
+        """minuti passati dall'orario del posto (nel fuso dell'account); None se il posto non ha un orario"""
+        hhmm = acc.get("slots", {}).get(slot)
+        if not hhmm:
+            return None
+        h, m = map(int, hhmm.split(":"))
+        quando = datetime(pkg_date.year, pkg_date.month, pkg_date.day, h, m, tzinfo=ZoneInfo(acc["timezone"])).astimezone(UTC)
+        return int((self.now - quando).total_seconds() // 60)
 
     def slot_time(self, pkg_date: date, acc: dict, slot: str) -> tuple[datetime, bool]:
         hhmm = acc["slots"].get(slot)
@@ -193,6 +203,19 @@ class Publisher:
             fermo = self.motivo_fermo(acc, pkg_date)
             if prev.get("stato") in DONE and not (self.riprendibile(prev) and not fermo):
                 continue
+            # Power, 25/11 03:07: «avevo accettato un contenuto di volwick e me lo sono ritrovato pubblicato ora». Era la
+            # versione nuova di un reel del giorno prima (il 24, posto delle 22:00): confermato alle 02:43, il sistema lo
+            # ha pubblicato subito come «in ritardo». Un posto passato da poco esce appena possibile (una conferma arrivata
+            # pochi minuti dopo l'orario); passato da più di late_max_minutes non esce: niente stato, il pacchetto resta
+            # confermato e il portale lo rimette nel primo posto libero, poi esce lì.
+            if acc and not fermo and not job.problems:
+                ritardo = self.ritardo_minuti(pkg_date, acc, job.slot)
+                limite = int(self.cfg.get("late_max_minutes", 120))
+                if ritardo is not None and ritardo > limite:
+                    log(f"[{brand} {pkg_name}] {job.key}: il suo orario è passato da {ritardo // 60} h {ritardo % 60:02d} min "
+                        f"(oltre {limite} min): non lo pubblico adesso, il portale lo rimette nel primo posto libero")
+                    self.troppo_tardi += 1
+                    continue
             rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat(), "cid": job.cid}
             try:
                 if fermo:

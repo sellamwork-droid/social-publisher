@@ -103,6 +103,8 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 | TikTok (Roma, come IG IT) | reel1 14:00 · carosello 17:00 · reel2 19:00 · reel3 21:00 | 15:00 · 18:00 · 20:00 · 22:00 |
 | Shorts (New York) | short1 14:00 · short2 19:00 · short3 21:00 | 14:30 · 19:30 · 21:30 |
 
+**Posto già passato** (Power, 25/11 03:07: «avevo accettato un contenuto di volwick e me lo sono ritrovato pubblicato ora»): se l'orario è passato da poco (meno di 2 ore, `late_max_minutes`) il post esce tra 10 minuti; se è passato da più di 2 ore **non esce**: il pacchetto resta confermato e il portale lo rimette nel primo posto libero da oggi, poi esce lì. Mai più un contenuto del giorno prima pubblicato di notte.
+
 ## 8. Controllo e centro di controllo
 - **Prima del "confermato"** la chat lancia il controllo automatico del cervello del brand (`cervello.py pacchetto …`): con un errore il contenuto non si mostra a Power.
 - **Ogni ora** il sistema programma le cartelle nuove, verifica su Blotato i post già passati di orario (pubblicato o fallito) e aggiorna il foglio **SOCIAL PUBLISHER · Cruscotto**:
