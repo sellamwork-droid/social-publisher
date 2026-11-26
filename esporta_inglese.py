@@ -25,6 +25,25 @@ def slug(t: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "-", t or "").strip("-")[:50]
 
 
+def _riprogramma(supa, r: dict) -> dict:
+    """campi per far rifare a social-publisher i post su Blotato (stesso orario). Una consegna programmata prima della
+    collocazione a mano non ha «ora»: si prende l'orario del suo post già programmato."""
+    from datetime import datetime, timezone
+    if any(v.get("stato") == "pubblicato" for v in (r.get("stato_post") or {}).values()):
+        return {}
+    if r.get("stato") not in ("programmato", "confermato", "errore"):
+        return {}
+    ora = r.get("ora")
+    if not ora:
+        posts = [p for p in supa.get("pub_post", select="ora_uscita,stato", consegna_id=f"eq.{r['id']}")
+                 if p.get("stato") == "programmato" and p.get("ora_uscita")]
+        if not posts:
+            return {}
+        ora = min(p["ora_uscita"] for p in posts)
+    return {"ora": ora, "modificato_at": datetime.now(timezone.utc).isoformat(), "stato": "confermato",
+            "nota_sistema": "File rifatto a 30 fps per Instagram: Blotato si aggiorna entro 15 minuti."}
+
+
 def main() -> None:
     supa = connect()
     out = Path("fuori"); out.mkdir(exist_ok=True)
@@ -69,17 +88,21 @@ def main() -> None:
                         rr.raise_for_status()
                         files[i] = {**f, "bytes": len(dati)}
                         corpo = {"files": files}
-                        gia_uscito = any(v.get("stato") == "pubblicato" for v in (r.get("stato_post") or {}).values())
-                        if riprogramma and r.get("ora") and not gia_uscito and r.get("stato") in ("programmato", "confermato", "errore"):
-                            from datetime import datetime, timezone
-                            corpo.update(modificato_at=datetime.now(timezone.utc).isoformat(), stato="confermato",
-                                         nota_sistema="File rifatto a 30 fps per Instagram: Blotato si aggiorna entro 15 minuti.")
-                            stato_file += ", riprogrammato su Blotato"
+                        if riprogramma:
+                            extra = _riprogramma(supa, r)
+                            if extra:
+                                corpo.update(extra)
+                                stato_file += ", riprogrammato su Blotato"
                         supa.patch("pub_consegne", {"id": r["id"]}, corpo)
                         stato_file += ", e rimesso nel portale"
                 else:
                     src.rename(dest)
                     stato_file = "già come lo chiede Instagram"
+                    if riprogramma and solo:  # ID scelti a mano: si rifà su Blotato anche se il file era già giusto
+                        corpo = _riprogramma(supa, r)
+                        if corpo:
+                            supa.patch("pub_consegne", {"id": r["id"]}, corpo)
+                            stato_file += ", riprogrammato su Blotato"
                 e = controlla(dest)
                 peso = dest.stat().st_size / 1e6
                 if not allega:
