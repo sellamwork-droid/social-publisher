@@ -31,6 +31,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from blotato import Blotato  # noqa: E402
 from media import cover_jpeg, prepend_cover_frame, video_instagram  # noqa: E402
+from esporta_ig import controlla as controlla_ig  # noqa: E402
 from plan import adapt_caption, parse_ids, Job, build_jobs, parse_caption, TARGETS  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 from sheet import Dashboard  # noqa: E402
@@ -147,7 +148,9 @@ class Publisher:
                 media_urls.append(self._upload(("tiktok", job.media[0].ref), tt))
             elif platform == "instagram":
                 ig = self.tmp / (Path(job.media[0].rel).stem + "_instagram.mp4")
-                if not ig.exists():
+                if not ig.exists() and not controlla_ig(video):
+                    ig = video  # la chat l'ha già esportato come lo chiede Instagram (esporta_ig.py): va così com'è
+                elif not ig.exists():
                     try:
                         video_instagram(video, ig)
                     except Exception as e:  # se la versione per Instagram non riesce, esce l'originale
