@@ -153,3 +153,6 @@ Dalle uscite del 27/11 TikTok @axux.official e @volwick.official escono in autom
 
 ## 30 fps per Instagram (Power, 26/11 22:32: «seguiamo la ricerca»)
 Instagram lavora a 30 fps: un 60 fps lo riconverte lui e perde qualità; le guide consigliano tutte 30 fps. esporta_ig.py ora esporta sempre a 30 fps fissi (GOP di 15 fotogrammi). Il workflow «Reel per Instagram» rifà i file del portale e, con «riprogramma», rifà su Blotato i post non ancora usciti.
+
+## Instagram USA di Volwick attivo (Power, 26/11 22:36: «attiviamo anche l'IG inglese di Volwick»)
+Dalle uscite del 27/11 @volwick.officiall esce da solo con i contenuti inglesi di Volwick (reel e caroselli), al giorno e all'ora scelti da Power in Uscite (gli stessi di YouTube). @axux.officiall resta a mano.

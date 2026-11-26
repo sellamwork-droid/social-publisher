@@ -77,8 +77,7 @@ brands:
         slots: {reel1: "15:00", carosello: "18:00", reel2: "20:00", reel3: "22:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
       ig_us:
         platform: instagram
-        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
-        dal: "2026-11-26"          # Power, 25/11 00:15: Instagram USA riparte con l'inglese che approva, dalle uscite del 26 novembre (prima: in pausa dal 23/11)
+        dal: "2026-11-27"          # Power, 26/11 22:36: «attiviamo anche l'IG inglese di Volwick» (dalle uscite del 27/11, stesso orario di YouTube)
         blotato_id: "88316"        # @volwick.officiall (Instagram USA, AdsPower)
         nome: "@volwick.officiall"
         timezone: America/New_York
