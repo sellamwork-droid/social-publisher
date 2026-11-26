@@ -3,6 +3,11 @@
 Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti per AXUX o VOLWICK segue questo file.
 (Copia anche nel Project AXUX: `sistema-pubblicazione-axux-volwick.md`. In caso di differenze vale questo file.)
 
+## Almeno 3 uscite al giorno, anche in ritardo (Power, 26 novembre 2026, 17:38)
+- «Ogni giorno dobbiamo pubblicare 3 contenuti minimo. Se siamo in ritardo li pubblichiamo lo stesso, troviamo altri orari,
+  ma entro oggi. Lo dico io, sono io il capo.» Un giorno non si salta: i confermati si collocano in orari nuovi dello stesso
+  giorno. Su richiesta di Power li colloca anche Claude con il workflow «Colloca uscite» (`colloca.py`).
+
 ## Collocazione a mano (Power, 26 novembre 2026, 17:15)
 - «Rendimi tutto manuale per ora. Quando schiaccio Confermato mi deve buttare su Uscite e mi fa collocare dove voglio io il
   video. E fammi collocare anche quelli già messi, fammi modificare. L'importante è che si modifica Blotato.»
