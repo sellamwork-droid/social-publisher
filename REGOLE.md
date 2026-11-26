@@ -6,7 +6,7 @@ Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti pe
 ## Almeno 3 uscite al giorno, anche in ritardo (Power, 26 novembre 2026, 17:38)
 - «Ogni giorno dobbiamo pubblicare 3 contenuti minimo. Se siamo in ritardo li pubblichiamo lo stesso, troviamo altri orari,
   ma entro oggi. Lo dico io, sono io il capo.» Un giorno non si salta: i confermati si collocano in orari nuovi dello stesso
-  giorno. Su richiesta di Power li colloca anche Claude con il workflow «Colloca uscite» (`colloca.py`).
+  giorno. Mai due caroselli nello stesso giorno per brand (Power, 17:47: «non due caroselli in un giorno»). Su richiesta di Power li colloca anche Claude con il workflow «Colloca uscite» (`colloca.py`).
 
 ## Collocazione a mano (Power, 26 novembre 2026, 17:15)
 - «Rendimi tutto manuale per ora. Quando schiaccio Confermato mi deve buttare su Uscite e mi fa collocare dove voglio io il

@@ -33,6 +33,14 @@ def main() -> None:
         if not righe:
             print(f"{cid}: nessuna consegna {lingua} confermata o programmata, salto"); continue
         c = sorted(righe, key=lambda r: r["created_at"])[-1]
+        # Power, 26/11 17:47: «non due caroselli in un giorno» (per brand)
+        cc = supa.get("pub_consegne", select="id,brand,tipo", id=f"eq.{c['id']}")[0]
+        if cc["tipo"] == "CAROSELLI":
+            altri = [r for r in supa.get("pub_consegne", select="id,contenuto_id", brand=f"eq.{cc['brand']}", lingua=f"eq.{lingua}",
+                                         tipo="eq.CAROSELLI", uscita=f"eq.{quando.date().isoformat()}", stato="in.(confermato,programmato,pubblicato)")
+                     if r["id"] != c["id"]]
+            if altri:
+                print(f"{cid}: il {quando.date()} c'è già il carosello {altri[0]['contenuto_id']}: mai due caroselli in un giorno, salto"); continue
         if any(v.get("stato") == "pubblicato" for v in (c.get("stato_post") or {}).values()):
             print(f"{cid}: già uscito, salto"); continue
         adesso = datetime.now(timezone.utc).isoformat()
