@@ -129,10 +129,13 @@ def annulla_uscite(supa: Supa, api, cfg: dict, portale, log, solo: str = "") -> 
         # (pubblicazioni ferme); C0003 inglese non si annullava. Le altre si dicono nel log, così si vede perché non si toccano.
         mie = [r for r in supa.get("pub_consegne", select="id,contenuto_id,stato,brand,lingua,tipo,uscita,stato_post")
                if solo in (r.get("contenuto_id"), r["id"], r["id"][:8])]
+        # e quelle già «annullato» (26/11 13:40): C0003 inglese risultava annullato ma senza nessun «cancellati su Blotato» nel
+        # log; si ricontrolla Blotato e, se il post è ancora lì, si cancella (se no il log dice «non trovati»)
+        buoni = ("confermato", "programmato", "errore", "annullato")
         for r in mie:
-            if r["stato"] not in ("confermato", "programmato", "errore"):
+            if r["stato"] not in buoni:
                 log(f"[{r['brand']} {r.get('contenuto_id') or r['id'][:8]} {r['lingua']}] non la annullo: è «{r['stato']}»")
-        righe += [r for r in mie if r["stato"] in ("confermato", "programmato", "errore")]
+        righe += [r for r in mie if r["stato"] in buoni]
     if not righe:
         return 0
     programmati = None
