@@ -35,6 +35,27 @@ def main() -> None:
             f"confermata {str(r.get('confermato_at') or r.get('aggiornato') or '')[:16]}",
         ]))
 
+    if os.environ.get("QUALITA") == "true":
+        # qualità dei file che escono (Power, 26/11 19:26): risoluzione, bitrate e peso dei video in uscita da oggi
+        import json as _j, subprocess, tempfile
+        oggi = date.today().isoformat()
+        for c in supa.get("pub_consegne", select="contenuto_id,lingua,stato,uscita,files", uscita=f"gte.{oggi}",
+                          stato="in.(confermato,programmato,da_approvare)"):
+            for f in c.get("files") or []:
+                if f.get("tipo") != "video":
+                    continue
+                d = Path(tempfile.mkdtemp()) / f["nome"]
+                supa.download(f["path"], d)
+                pr = _j.loads(subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                     "stream=codec_name,width,height,bit_rate,r_frame_rate:format=duration,bit_rate", "-of", "json", str(d)],
+                     capture_output=True, text=True).stdout or "{}")
+                v = next((x for x in pr.get("streams", []) if x.get("width")), {})
+                a_ = next((x for x in pr.get("streams", []) if not x.get("width")), {})
+                fm = pr.get("format", {})
+                print(f"QUALITA {c['contenuto_id']} {c['lingua']} {c['stato']:<12} {v.get('width')}x{v.get('height')} {v.get('codec_name')} "
+                      f"{v.get('r_frame_rate')} fps · video {int(v.get('bit_rate') or 0)//1000} kb/s · audio {a_.get('codec_name')} "
+                      f"{int(a_.get('bit_rate') or 0)//1000} kb/s · {float(fm.get('duration') or 0):.1f} s · {f.get('bytes', 0)/1e6:.1f} MB")
+                d.unlink()
     if os.environ.get("CHAT") == "true":
         # il portale ha la funzione «sposta uscita»? (si chiama con un id inesistente: risponde «non autorizzato» o «non trovata»
         # se c'è, «Could not find the function» se il database non è ancora aggiornato; non cambia niente)
