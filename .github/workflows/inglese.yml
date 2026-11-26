@@ -1,0 +1,30 @@
+name: Versione inglese dei confermati
+
+# Power, 26/11 16:59: le traduzioni devono partire quando approva. Chiede la versione inglese degli ID scritti (come il
+# bottone «Fai la versione inglese»), senza doppioni.
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "ID italiani confermati (es. A0012,C0007)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  inglese:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Chiede l'inglese
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          IDS: ${{ inputs.ids }}
+        run: python inglese.py
