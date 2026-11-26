@@ -1,0 +1,33 @@
+name: Messaggio a una chat
+
+# Una richiesta di Power scritta a una chat del portale da Claude, quando Power lo chiede in un'altra chat (26/11 19:05).
+on:
+  workflow_dispatch:
+    inputs:
+      chat:
+        description: "ID della chat (es. volwick-t2)"
+        required: true
+      testo:
+        description: "Il messaggio"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  messaggio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Scrive
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          CHAT: ${{ inputs.chat }}
+          TESTO: ${{ inputs.testo }}
+        run: python messaggio.py
