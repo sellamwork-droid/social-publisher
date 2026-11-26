@@ -1,4 +1,4 @@
-name: Reel inglesi per Instagram
+name: Reel per Instagram (esporta e rimetti nel portale)
 
 # Power, 26/11 20:21: «mi riesci a rimandare qui tutti i reel accettati in inglese», «dammelo per ig direttamente».
 # Esporta i reel EN accettati come li chiede Instagram e li allega a una release in BOZZA (non visibile al pubblico).
@@ -11,6 +11,22 @@ on:
         default: ""
       aggiorna:
         description: "Rimetti nel portale il file per Instagram al posto di quello vecchio"
+        type: boolean
+        default: true
+      lingua:
+        description: "IT, EN o tutte"
+        required: false
+        default: "EN"
+      dal:
+        description: "Solo le uscite da questo giorno (AAAA-MM-GG). Vuoto = tutte"
+        required: false
+        default: ""
+      riprogramma:
+        description: "I programmati non ancora usciti si rifanno su Blotato con il file nuovo"
+        type: boolean
+        default: false
+      allega:
+        description: "Allega i file a una release in bozza da scaricare"
         type: boolean
         default: true
 
@@ -33,8 +49,13 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           IDS: ${{ inputs.ids }}
           AGGIORNA: ${{ inputs.aggiorna }}
+          LINGUA: ${{ inputs.lingua }}
+          DAL: ${{ inputs.dal }}
+          RIPROGRAMMA: ${{ inputs.riprogramma }}
+          ALLEGA: ${{ inputs.allega }}
         run: python esporta_inglese.py
       - name: Release in bozza
+        if: ${{ inputs.allega }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

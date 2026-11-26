@@ -67,33 +67,6 @@ def prepend_cover_frame(video: Path, cover: Path, dest: Path) -> Path:
 
 
 def video_instagram(src: Path, dest: Path) -> Path:
-    """Versione per Instagram alla massima qualità che Instagram accetta (Power, 26/11 20:08: «alzare la qualità al massimo»).
-    Instagram ricomprime sempre: gli si dà il file che chiede il suo centro assistenza e l'API dei reel, così la sua
-    ricompressione parte dal meglio possibile. 1080x1920, H.264 High con CABAC, 2 B-frame, GOP chiuso di mezzo secondo,
-    frequenza fissa 23-60 fps, VBR quasi senza perdita (CRF 10) con tetto 24 Mbps e file sotto i 95 MB, colori BT.709,
-    audio AAC-LC 48 kHz stereo, moov in testa."""
-    info = probe(src)
-    fps = info["fps"]
-    if not 23 <= fps <= 60:
-        fps = 60.0 if fps > 60 else 30.0
-    fps_r = round(fps)
-    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
-                         capture_output=True, text=True).stdout.strip()
-    dur = float(out or 0) or 60.0
-    audio_k = 256
-    kbps = int(min(22000, 95_000_000 * 8 / dur / 1000 - audio_k - 300))
-    gop = max(1, fps_r // 2)
-    vf = (f"scale=1080:1920:force_original_aspect_ratio=decrease:flags=lanczos,"
-          f"pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps={fps_r},"
-          f"scale=out_color_matrix=bt709:out_range=tv,format=yuv420p")
-    cmd = ["ffmpeg", "-y", "-v", "error", "-i", str(src), "-map", "0:v:0", "-vf", vf,
-           "-c:v", "libx264", "-profile:v", "high", "-level", "4.2", "-preset", "slow",
-           "-crf", "10", "-maxrate", f"{kbps}k", "-bufsize", f"{kbps}k",
-           "-g", str(gop), "-keyint_min", str(gop), "-sc_threshold", "0", "-bf", "2", "-flags", "+cgop",
-           "-x264-params", "cabac=1",
-           "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
-    if info["audio"]:
-        cmd += ["-map", "0:a:0", "-c:a", "aac", "-b:a", f"{audio_k}k", "-ar", "48000", "-ac", "2"]
-    cmd += ["-movflags", "+faststart", str(dest)]
-    subprocess.run(cmd, check=True)
-    return dest
+    """Versione per Instagram: la stessa esportazione delle chat (esporta_ig.py, 30 fps, Power 26/11 22:32)."""
+    from esporta_ig import esporta
+    return esporta(src, dest)

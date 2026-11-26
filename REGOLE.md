@@ -150,3 +150,6 @@ Nel portale, in Uscite, Power cambia giorno e ora, titolo, descrizione e coperti
 
 ## TikTok italiani attivi (Power, 26/11 22:22: «attiva i TikTok italiani e mettili già i programmati da domani»)
 Dalle uscite del 27/11 TikTok @axux.official e @volwick.official escono in automatico, come Instagram italiano: stessi contenuti italiani (reel e caroselli), stesso giorno e ora scelti da Power in Uscite. Le consegne già programmate dal 27 in poi ricevono il loro post TikTok al giro successivo, senza rifare quelli di Instagram. Restano a mano solo Instagram USA (@axux.officiall, @volwick.officiall).
+
+## 30 fps per Instagram (Power, 26/11 22:32: «seguiamo la ricerca»)
+Instagram lavora a 30 fps: un 60 fps lo riconverte lui e perde qualità; le guide consigliano tutte 30 fps. esporta_ig.py ora esporta sempre a 30 fps fissi (GOP di 15 fotogrammi). Il workflow «Reel per Instagram» rifà i file del portale e, con «riprogramma», rifà su Blotato i post non ancora usciti.

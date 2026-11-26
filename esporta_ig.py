@@ -6,13 +6,17 @@ quello che si consegna. Vale per IT ed EN, per Instagram, YouTube e TikTok.
     python3 esporta_ig.py <video_finito.mp4> <reel1.mp4>
 
 Specifiche (centro assistenza Instagram e API dei reel di Meta): 1080x1920 9:16, H.264 High con CABAC, 2 B-frame,
-GOP chiuso di mezzo secondo, frequenza fissa tra 23 e 60 fps (si tiene quella del video), VBR sotto i 25 Mb/s
+GOP chiuso di mezzo secondo, 30 fps fissi (Power, 26/11 22:32: «seguiamo la ricerca»: Instagram lavora a 30 fps e un
+60 fps lo riconverte lui, perdendo qualità; tutte le guide consigliano 30), VBR sotto i 25 Mb/s
 (CRF 10 quasi senza perdita, tetto 22 Mb/s), file sotto i 95 MB (limite API 100 MB), colori BT.709,
 audio AAC-LC 48 kHz stereo 256 kb/s, moov in testa. Il controllo è in cervello.py pacchetto (controlla_ig)."""
 import json
 import subprocess
 import sys
 from pathlib import Path
+
+
+FPS = 30
 
 
 def info(p):
@@ -27,7 +31,7 @@ def esporta(src, dest):
     has_a = any(s["codec_type"] == "audio" for s in j["streams"])
     num, den = (v.get("avg_frame_rate") or v.get("r_frame_rate") or "30/1").split("/")
     fps = float(num) / float(den) if float(den) else 30.0
-    fps = min(60, max(23, round(fps)))
+    fps = FPS
     dur = float(j["format"].get("duration") or 60)
     audio_k = 256
     kbps = int(min(22000, 95_000_000 * 8 / dur / 1000 - audio_k - 300))
@@ -66,8 +70,8 @@ def controlla(p):
         err.append(f"{v.get('codec_name')} {v.get('profile')}, serve H.264 High")
     num, den = (v.get("avg_frame_rate") or "0/1").split("/")
     fps = float(num) / float(den) if float(den) else 0
-    if not 22.9 <= fps <= 60.1:
-        err.append(f"{fps:.2f} fps, serve tra 23 e 60")
+    if abs(fps - FPS) > 0.1:
+        err.append(f"{fps:.2f} fps, Instagram vuole {FPS} fps")
     if v.get("color_space") != "bt709":
         err.append("colori non BT.709")
     size = int(j["format"].get("size") or 0)
