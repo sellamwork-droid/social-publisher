@@ -104,6 +104,15 @@ class Publisher:
         quando = datetime(pkg_date.year, pkg_date.month, pkg_date.day, h, m, tzinfo=ZoneInfo(acc["timezone"])).astimezone(UTC)
         return int((self.now - quando).total_seconds() // 60)
 
+    def quando(self, pkg_date: date, acc: dict, slot: str, ora: datetime | None) -> tuple[datetime, bool]:
+        """l'ora scelta da Power nel portale se c'è (26/11 17:15, collocazione a mano), se no l'orario del posto"""
+        if ora is None:
+            return self.slot_time(pkg_date, acc, slot)
+        when = ora.astimezone(UTC)
+        if when < self.now + timedelta(minutes=5):
+            return self.now + timedelta(minutes=self.cfg.get("late_publish_minutes", 10)), True
+        return when, False
+
     def slot_time(self, pkg_date: date, acc: dict, slot: str) -> tuple[datetime, bool]:
         hhmm = acc["slots"].get(slot)
         if not hhmm:
@@ -191,6 +200,12 @@ class Publisher:
         if "ID.txt" in files:
             parse_ids(self._local_file(files["ID.txt"]).read_text(encoding="utf-8", errors="replace"), jobs)
         state = self.storage.read_state(pkg_ref)
+        ora = self.storage.orario(pkg_ref) if hasattr(self.storage, "orario") else None
+        # Power, 26/11 17:15: «rendimi tutto manuale per ora»: una consegna del portale esce solo quando Power le ha dato
+        # giorno e ora in Uscite. Senza, aspetta (niente stato, niente Blotato).
+        if (self.cfg.get("collocazione_manuale") and not solo_nuovi and ora is None and pkg_ref.startswith("portale::")):
+            log(f"[{brand} {pkg_name}] da collocare: aspetta che Power scelga giorno e ora in Uscite")
+            return
         if not jobs:
             log(f"[{brand} {pkg_name}] nessun file riconosciuto (controlla i nomi)")
             return
@@ -211,7 +226,7 @@ class Publisher:
             # già programmato su Blotato all'orario vecchio si cancella e si riprogramma qui all'orario nuovo.
             if prev.get("stato") == "programmato" and acc and not fermo and not job.problems and prev.get("quando"):
                 try:
-                    nuovo = self.slot_time(pkg_date, acc, job.slot)[0].strftime("%Y%m%d%H%M")
+                    nuovo = self.quando(pkg_date, acc, job.slot, ora)[0].strftime("%Y%m%d%H%M")
                 except Exception:
                     nuovo = prev["quando"]
                 if nuovo != prev["quando"]:
@@ -234,7 +249,8 @@ class Publisher:
             # pochi minuti dopo l'orario); passato da più di late_max_minutes non esce: niente stato, il pacchetto resta
             # confermato e il portale lo rimette nel primo posto libero, poi esce lì.
             if acc and not fermo and not job.problems:
-                ritardo = self.ritardo_minuti(pkg_date, acc, job.slot)
+                ritardo = (int((self.now - ora).total_seconds() // 60) if ora is not None
+                           else self.ritardo_minuti(pkg_date, acc, job.slot))
                 limite = int(self.cfg.get("late_max_minutes", 120))
                 if ritardo is not None and ritardo > limite:
                     log(f"[{brand} {pkg_name}] {job.key}: il suo orario è passato da {ritardo // 60} h {ritardo % 60:02d} min "
@@ -248,7 +264,7 @@ class Publisher:
                 elif job.problems:
                     rec.update(stato="errore", motivo="; ".join(job.problems))
                 else:
-                    when, late = self.slot_time(pkg_date, acc, job.slot)
+                    when, late = self.quando(pkg_date, acc, job.slot, ora)
                     src = job.alt.get(acc["platform"]) or job.caption
                     caption = self._local_file(src).read_text(encoding="utf-8") if src else ""
                     if not caption.strip():

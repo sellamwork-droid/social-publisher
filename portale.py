@@ -75,6 +75,12 @@ class PortalStorage:
     def published_packages(self, brand: str) -> dict[str, str]:
         return self._list(brand, "programmato,pubblicato,errore")
 
+    def orario(self, ref: str) -> datetime | None:
+        """giorno e ora scelti da Power nel portale (colonna «ora», 26/11 17:15); None = ancora da collocare"""
+        r = self._rows.get(ref) or (self.db.get("pub_consegne", select="ora", id=f"eq.{ref}") or [{}])[0]
+        v = r.get("ora")
+        return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else None
+
     def list_files(self, ref: str) -> dict[str, FileRef]:
         r = self._rows.get(ref) or self.db.get("pub_consegne", select="*", id=f"eq.{ref}")[0]
         out = {f["nome"]: FileRef(f["nome"], f["path"], int(f.get("bytes") or 0)) for f in r.get("files", [])}
@@ -217,6 +223,10 @@ class MultiStorage:
     def move_to_published(self, brand, name, ref):
         s, raw = self._split(ref)
         return s.move_to_published(brand, name, raw)
+
+    def orario(self, ref):
+        s, raw = self._split(ref)
+        return s.orario(raw) if hasattr(s, "orario") else None
 
 
 class Portale:

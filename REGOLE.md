@@ -3,6 +3,16 @@
 Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti per AXUX o VOLWICK segue questo file.
 (Copia anche nel Project AXUX: `sistema-pubblicazione-axux-volwick.md`. In caso di differenze vale questo file.)
 
+## Collocazione a mano (Power, 26 novembre 2026, 17:15)
+- «Rendimi tutto manuale per ora. Quando schiaccio Confermato mi deve buttare su Uscite e mi fa collocare dove voglio io il
+  video. E fammi collocare anche quelli già messi, fammi modificare. L'importante è che si modifica Blotato.»
+- `collocazione_manuale: true` in `config.yaml`: una consegna confermata nel portale **non esce** finché Power non sceglie
+  giorno e ora in Uscite (colonna `ora` di `pub_consegne`, funzione `pub_colloca`). Gli orari dei posti (reel1, reel2…)
+  non decidono più l'ora delle consegne del portale.
+- Ricollocare un'uscita già programmata: torna «confermato» con l'ora nuova; al giro dopo (entro 15 minuti) il sistema
+  cancella su Blotato il post all'orario vecchio e lo riprogramma. Per questo l'ora scelta deve essere almeno 15 minuti dopo.
+- Le chat su claude.ai (cartelle di Drive) restano con gli orari dei posti.
+
 ## Uscite automatiche: Instagram italiano e YouTube inglese (Power, 26 novembre 2026, 16:47)
 - «Metti le uscite automatiche quando scrivo confermato per Instagram italiano, per YouTube inglese e permettimi di scaricare i video.»
 - **In automatico** dopo il Confermato di Power: **Instagram italiano** (@axux.ita, @volwick.ita) per l'italiano, **YouTube**
