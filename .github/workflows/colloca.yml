@@ -1,0 +1,34 @@
+name: Colloca uscite
+
+# Come «Colloca» in Uscite, per quando le colloca Claude su richiesta di Power (26/11 17:38). Dopo, il giro di
+# pubblicazione sposta i post su Blotato.
+on:
+  workflow_dispatch:
+    inputs:
+      colloca:
+        description: "ID=AAAA-MM-GG HH:MM (ora italiana), separati da virgola"
+        required: true
+      lingua:
+        description: "IT o EN"
+        default: "IT"
+
+permissions:
+  contents: read
+
+jobs:
+  colloca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Colloca
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          COLLOCA: ${{ inputs.colloca }}
+          LINGUA: ${{ inputs.lingua }}
+        run: python colloca.py
