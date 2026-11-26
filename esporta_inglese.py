@@ -81,9 +81,10 @@ def main() -> None:
                     src.rename(dest)
                     stato_file = "già come lo chiede Instagram"
                 e = controlla(dest)
+                peso = dest.stat().st_size / 1e6
                 if not allega:
                     dest.unlink(missing_ok=True)
-                print(f"REEL {cid} EN {r.get('stato')} uscita {r.get('uscita')}: {dest.name} {dest.stat().st_size / 1e6:.1f} MB · "
+                print(f"REEL {cid} {r['lingua']} {r.get('stato')} uscita {r.get('uscita')}: {dest.name} {peso:.1f} MB · "
                       f"{stato_file} · {'OK Instagram' if not e else 'NON VA: ' + ' · '.join(e)}")
             elif "_cover." in low and allega:
                 supa.download(f["path"], out / f"{nome}_copertina{Path(f['nome']).suffix}")
