@@ -81,6 +81,14 @@ def main() -> None:
         r = supa.s.post(f"{supa.url}/rest/v1/rpc/pub_colloca", timeout=60,
                         json={"consegna": "00000000-0000-0000-0000-000000000000", "quando": "2030-01-01T10:00:00Z"})
         print(f"\nFUNZIONE pub_colloca: {r.status_code} {r.text[:160]}")
+        r = supa.s.post(f"{supa.url}/rest/v1/rpc/pub_modifica_uscita", timeout=60,
+                        json={"consegna": "00000000-0000-0000-0000-000000000000"})
+        print(f"FUNZIONE pub_modifica_uscita: {r.status_code} {r.text[:160]}")
+        try:
+            for c in supa.get("pub_chats", select="id,titolo,attiva", order="ordine"):
+                print(f"CHAT {c['id']:<18} {c.get('titolo')!s:<24} attiva={c.get('attiva')}")
+        except Exception as e:
+            print(f"CHAT (colonna attiva non ancora presente: {str(e)[:120]})")
         oggi = date.today().isoformat()
         print(f"\nUSCITE DA OGGI ({oggi})")
         for p in sorted(supa.get("pub_post", select="uscita,ora_uscita,account,contenuto_id,lingua,stato,motivo", uscita=f"gte.{oggi}"),
