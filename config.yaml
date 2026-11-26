@@ -40,14 +40,13 @@ brands:
     accounts:
       ig_it:
         platform: instagram
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
         blotato_id: "87313"        # @axux.ita
         nome: "@axux.ita"
         timezone: Europe/Rome
         slots: {reel1: "14:00", carosello: "17:00", reel2: "19:00", reel3: "21:00", storia1: "10:00", storia2: "16:00", storia3: "19:30"}
       ig_us:
         platform: instagram
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
+        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
         dal: "2026-11-26"          # Power, 25/11 00:15: Instagram USA riparte con l'inglese che approva, dalle uscite del 26 novembre (prima: in pausa dal 23/11)
         blotato_id: "88313"        # @axux.officiall (Instagram USA, AdsPower)
         nome: "@axux.officiall"
@@ -55,7 +54,7 @@ brands:
         slots: {carosello: "09:00", reel1: "12:00", reel2: "18:00", reel3: "21:00", storia1: "08:30", storia2: "13:30", storia3: "20:00"}
       tiktok:
         platform: tiktok
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
+        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
         dal: "2026-11-26"          # Power, 25/11 00:15: «i tik tok italiani vanno usati per lingua ita per ora»: contenuti italiani, dal 26 novembre
         blotato_id: "70653"        # @axux.official (TikTok, per ora in italiano)
         nome: "TikTok @axux.official"
@@ -63,7 +62,6 @@ brands:
         slots: {reel1: "14:00", carosello: "17:00", reel2: "19:00", reel3: "21:00"}   # come Instagram Italia
       youtube:
         platform: youtube
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
         blotato_id: "58952"        # Media axux (Axux)
         nome: "YouTube Media axux"
         timezone: America/New_York
@@ -73,14 +71,13 @@ brands:
     accounts:
       ig_it:
         platform: instagram
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
         blotato_id: "81927"        # @volwick.ita (Instagram italiano)
         nome: "@volwick.ita"
         timezone: Europe/Rome
         slots: {reel1: "15:00", carosello: "18:00", reel2: "20:00", reel3: "22:00", storia1: "10:30", storia2: "16:30", storia3: "20:00"}
       ig_us:
         platform: instagram
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
+        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
         dal: "2026-11-26"          # Power, 25/11 00:15: Instagram USA riparte con l'inglese che approva, dalle uscite del 26 novembre (prima: in pausa dal 23/11)
         blotato_id: "88316"        # @volwick.officiall (Instagram USA, AdsPower)
         nome: "@volwick.officiall"
@@ -88,7 +85,7 @@ brands:
         slots: {carosello: "09:30", reel1: "12:30", reel2: "18:30", reel3: "21:30", storia1: "09:00", storia2: "14:00", storia3: "20:30"}
       tiktok:
         platform: tiktok
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
+        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
         dal: "2026-11-26"          # Power, 25/11 00:15: «i tik tok italiani vanno usati per lingua ita per ora»: contenuti italiani, dal 26 novembre
         blotato_id: "66374"        # @volwick.official (TikTok, per ora in italiano)
         nome: "TikTok @volwick.official"
@@ -96,7 +93,6 @@ brands:
         slots: {reel1: "15:00", carosello: "18:00", reel2: "20:00", reel3: "22:00"}   # come Instagram Italia
       youtube:
         platform: youtube
-        paused: true               # Power, 26/11 03:03: «blocca tutte le pubblicazioni per ora» (si riparte togliendo questa riga)
         blotato_id: "55432"        # Volwick Official
         nome: "YouTube Volwick Official"
         timezone: America/New_York
