@@ -141,3 +141,6 @@ Gli Instagram USA si aprono e si ricollegano SOLO dal loro profilo AdsPower con 
 
 ## 9. Sicurezza
 Chiavi solo nei Secrets di GitHub, mai in chat o nei file. Storie con link sticker: solo a mano (limite di Meta). Contenuti dichiarati "fatti con AI" su TikTok e YouTube.
+
+## Qualità su Instagram (Power, 26/11 20:08: «alzare la qualità al massimo»)
+Prima dell'invio a Instagram il sistema fa una versione apposta del reel, come la chiede Instagram: 1080x1920, H.264 High, 2 B-frame, GOP chiuso di mezzo secondo, stessa frequenza (23-60 fps), quasi senza perdita (CRF 10) con tetto 22 Mbps e file sotto i 95 MB, colori BT.709, audio AAC 48 kHz stereo 256 kb/s. YouTube riceve l'originale. Instagram ricomprime comunque: così parte dal file migliore che accetta. Su Telegram un video si manda come **file** (Allega › File), non come video, altrimenti Telegram lo comprime.

@@ -30,7 +30,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).parent))
 from blotato import Blotato  # noqa: E402
-from media import cover_jpeg, prepend_cover_frame  # noqa: E402
+from media import cover_jpeg, prepend_cover_frame, video_instagram  # noqa: E402
 from plan import adapt_caption, parse_ids, Job, build_jobs, parse_caption, TARGETS  # noqa: E402
 from storage import DriveStorage, LocalStorage  # noqa: E402
 from sheet import Dashboard  # noqa: E402
@@ -145,6 +145,15 @@ class Publisher:
                 if not tt.exists():
                     prepend_cover_frame(video, self._local_file(job.cover), tt)
                 media_urls.append(self._upload(("tiktok", job.media[0].ref), tt))
+            elif platform == "instagram":
+                ig = self.tmp / (Path(job.media[0].rel).stem + "_instagram.mp4")
+                if not ig.exists():
+                    try:
+                        video_instagram(video, ig)
+                    except Exception as e:  # se la versione per Instagram non riesce, esce l'originale
+                        log(f"versione per Instagram non riuscita ({e}): uso l'originale")
+                        ig = video
+                media_urls.append(self._upload(("instagram", job.media[0].ref), ig))
             else:
                 media_urls.append(self._upload(("video", job.media[0].ref), video))
 
