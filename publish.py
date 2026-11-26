@@ -204,7 +204,20 @@ class Publisher:
         # Power, 26/11 17:15: «rendimi tutto manuale per ora»: una consegna del portale esce solo quando Power le ha dato
         # giorno e ora in Uscite. Senza, aspetta (niente stato, niente Blotato).
         if (self.cfg.get("collocazione_manuale") and not solo_nuovi and ora is None and pkg_ref.startswith("portale::")):
-            log(f"[{brand} {pkg_name}] da collocare: aspetta che Power scelga giorno e ora in Uscite")
+            # messa «In attesa» da Power (26/11 17:55): i post già programmati su Blotato si tolgono, poi aspetta
+            vivi = {k: v for k, v in state.items() if v.get("stato") == "programmato" and v.get("quando")}
+            if vivi and not self.api.dry_run:
+                for key, rec in vivi.items():
+                    acc = bcfg["accounts"].get(rec.get("account") or key.split(":")[0], {})
+                    trovati = [x for x in self._programmati()
+                               if str((x.get("account") or {}).get("id") or (x.get("draft") or {}).get("accountId")) == str(acc.get("blotato_id"))
+                               and (x.get("scheduledAt") or "").replace("-", "").replace("T", "").replace(":", "")[:12] == rec["quando"]]
+                    for x in trovati:
+                        self.api.delete_schedule(x["id"])
+                    log(f"   {key:<20} in attesa: {'tolto da Blotato il post' if trovati else 'non trovato su Blotato il post'} delle {rec.get('orario', rec['quando'])}")
+                    del state[key]
+                self.storage.write_state(pkg_ref, state)
+            log(f"[{brand} {pkg_name}] in attesa: aspetta che Power scelga giorno e ora in Uscite")
             return
         if not jobs:
             log(f"[{brand} {pkg_name}] nessun file riconosciuto (controlla i nomi)")
@@ -429,7 +442,8 @@ class Publisher:
                 except ValueError:
                     log(f"[{brand}] cartella '{name}' ignorata: il nome deve essere AAAA-MM-GG")
                     continue
-                if d > last:
+                # fuori finestra, ma con post già su Blotato (spostato più avanti o messo in attesa da Power): si sistema subito
+                if d > last and not any(v.get("stato") == "programmato" for v in self.storage.read_state(ref).values()):
                     log(f"[{brand} {name}] fuori finestra: lo prendo dal {d - timedelta(days=self.cfg.get('lookahead_days', 2))}")
                     continue
                 try:
