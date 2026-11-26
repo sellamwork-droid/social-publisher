@@ -125,8 +125,14 @@ def annulla_uscite(supa: Supa, api, cfg: dict, portale, log, solo: str = "") -> 
         log(f"(allineamento uscite annullate non riuscito: {str(e)[:200]})")
     righe = supa.get("pub_consegne", select="*", stato="eq.da_annullare")
     if solo:
-        righe += [r for r in supa.get("pub_consegne", select="*", stato="in.(confermato,programmato)")
-                  if solo in (r.get("contenuto_id"), r["id"], r["id"][:8])]
+        # anche le consegne «errore» (un post fallito, gli altri ancora programmati su Blotato): Power, 26/11 03:13, «annullali»
+        # (pubblicazioni ferme); C0003 inglese non si annullava. Le altre si dicono nel log, così si vede perché non si toccano.
+        mie = [r for r in supa.get("pub_consegne", select="id,contenuto_id,stato,brand,lingua,tipo,uscita,stato_post")
+               if solo in (r.get("contenuto_id"), r["id"], r["id"][:8])]
+        for r in mie:
+            if r["stato"] not in ("confermato", "programmato", "errore"):
+                log(f"[{r['brand']} {r.get('contenuto_id') or r['id'][:8]} {r['lingua']}] non la annullo: è «{r['stato']}»")
+        righe += [r for r in mie if r["stato"] in ("confermato", "programmato", "errore")]
     if not righe:
         return 0
     programmati = None
