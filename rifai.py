@@ -34,7 +34,12 @@ def main() -> None:
         if not chat:
             print(f"{cid}: la chat che l'ha fatto non è attiva, salto")
             continue
-        lingue = sorted({r["lingua"] for r in righe}, key=lambda l: 0 if l == "IT" else 1)
+        # una lingua già uscita non si rifà (resta il post pubblicato)
+        uscite = {r["lingua"] for r in righe if r["stato"] == "pubblicato"}
+        lingue = sorted({r["lingua"] for r in righe} - uscite, key=lambda l: 0 if l == "IT" else 1)
+        if not lingue:
+            print(f"{cid}: già uscito in tutte le lingue, salto")
+            continue
         brand = chats[chat]["brand"]
         testo = TESTO.format(cid=cid, lingue=" e ".join("italiano" if l == "IT" else "inglese" for l in lingue),
                              volwick=(" Se il motore non è ancora centrato (pull request #401 non ancora dentro), centra dentro la tua scena." if brand == "VOLWICK" else ""),
