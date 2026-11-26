@@ -1,0 +1,33 @@
+name: Rifai reel per Instagram
+
+# Power, 26/11 23:25: «aggiorniamo tutti sti video come ha fatto questa chat e rimettiamoli qui»
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "ID dei reel da rifare (es. A0012,A0016,V0387)"
+        required: true
+      prova:
+        description: "Solo elenco, niente messaggi alle chat"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  rifai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          IDS: ${{ inputs.ids }}
+          PROVA: ${{ inputs.prova }}
+        run: python rifai.py
