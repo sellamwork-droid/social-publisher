@@ -3,6 +3,12 @@
 Unico sistema, uguali regole per i due brand. Ogni chat che produce contenuti per AXUX o VOLWICK segue questo file.
 (Copia anche nel Project AXUX: `sistema-pubblicazione-axux-volwick.md`. In caso di differenze vale questo file.)
 
+## PUBBLICAZIONI FERME (Power, 26 novembre 2026, 03:03: «blocca tutte le pubblicazioni per ora»)
+- Tutti gli account di AXUX e VOLWICK sono in pausa (`paused: true` in `config.yaml`): il sistema non programma più niente
+  su Blotato. I post che si saltano per la pausa restano «saltato · account in pausa» e si rifanno da soli quando si riparte.
+- Si riparte solo quando Power lo dice: si tolgono le righe `paused: true` aggiunte il 26/11.
+- La pausa non tocca i post già programmati su Blotato prima delle 03:03: per toglierli serve «Annulla uscita» (deciso da Power).
+
 ## Portale Studio Hub (dal 22 novembre 2026)
 Il posto unico di Power è il portale **Studio Hub**: piano dei 7 giorni, chat per brand e tipologia (Claude Code sul Mac), consegne con anteprima, bottone **Confermato**, uscite e numeri. Una consegna confermata nel portale esce da sola entro 15 minuti, con le stesse regole di questo file (nomi, copertina, orari, account). Le chat su claude.ai continuano a usare le cartelle di Drive qui sotto.
 
