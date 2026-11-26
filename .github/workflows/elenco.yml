@@ -1,0 +1,38 @@
+name: Elenco consegne (sola lettura)
+
+# Power, 26/11 13:50: «prima dimmi quali sono», «prima fammeli vedere». Stampa le consegne del portale da ieri in poi e, se
+# si scrivono degli ID, ne carica i file italiani come artifact da guardare (dura un giorno). Non scrive niente da nessuna parte.
+on:
+  workflow_dispatch:
+    inputs:
+      mostra:
+        description: "ID da scaricare per guardarli (es. C0003,C0005,A0014). Vuoto = solo l'elenco"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  elenco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Elenco
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MOSTRA: ${{ inputs.mostra }}
+        run: python elenco.py
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.mostra != '' }}
+        with:
+          name: da-guardare
+          path: da_guardare
+          retention-days: 1
+          if-no-files-found: warn
