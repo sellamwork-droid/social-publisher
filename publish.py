@@ -170,6 +170,12 @@ class Publisher:
                          "content": {"platform": platform, "text": text, "mediaUrls": media_urls},
                          "target": target}}
 
+    def _programmati(self) -> list[dict]:
+        """i post programmati su Blotato, letti una volta per giro (servono per spostare un'uscita)"""
+        if getattr(self, "_cache_programmati", None) is None:
+            self._cache_programmati = self.api.schedules()
+        return self._cache_programmati
+
     # ---------- pacchetto
     def run_package(self, brand: str, bcfg: dict, pkg_name: str, pkg_ref: str, solo_nuovi: bool = False) -> None:
         """solo_nuovi: pacchetto già programmato o pubblicato, si fanno solo i post nuovi (un account partito dopo)"""
@@ -201,6 +207,25 @@ class Publisher:
             prev = state.get(job.key, {})
             acc = bcfg["accounts"].get(job.account)
             fermo = self.motivo_fermo(acc, pkg_date)
+            # Power, 26/11 17:00: un'uscita spostata nel portale (pub_sposta_uscita) torna «confermato» con il giorno nuovo. Il post
+            # già programmato su Blotato all'orario vecchio si cancella e si riprogramma qui all'orario nuovo.
+            if prev.get("stato") == "programmato" and acc and not fermo and not job.problems and prev.get("quando"):
+                try:
+                    nuovo = self.slot_time(pkg_date, acc, job.slot)[0].strftime("%Y%m%d%H%M")
+                except Exception:
+                    nuovo = prev["quando"]
+                if nuovo != prev["quando"]:
+                    if self.api.dry_run:
+                        log(f"   {job.key:<20} prova: spostato dal {prev['quando']} al {nuovo}")
+                        continue
+                    vecchi = [x for x in self._programmati()
+                              if str((x.get("account") or {}).get("id") or (x.get("draft") or {}).get("accountId")) == str(acc.get("blotato_id"))
+                              and (x.get("scheduledAt") or "").replace("-", "").replace("T", "").replace(":", "")[:12] == prev["quando"]]
+                    for x in vecchi:
+                        self.api.delete_schedule(x["id"])
+                    log(f"   {job.key:<20} spostato: {'cancellato su Blotato il post' if vecchi else 'non trovato su Blotato il post'} "
+                        f"delle {prev.get('orario', prev['quando'])}, lo riprogrammo")
+                    prev = {}
             if prev.get("stato") in DONE and not (self.riprendibile(prev) and not fermo):
                 continue
             # Power, 25/11 03:07: «avevo accettato un contenuto di volwick e me lo sono ritrovato pubblicato ora». Era la
