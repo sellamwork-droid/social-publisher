@@ -1,0 +1,42 @@
+name: Reel inglesi per Instagram
+
+# Power, 26/11 20:21: «mi riesci a rimandare qui tutti i reel accettati in inglese», «dammelo per ig direttamente».
+# Esporta i reel EN accettati come li chiede Instagram e li allega a una release in BOZZA (non visibile al pubblico).
+on:
+  workflow_dispatch:
+    inputs:
+      ids:
+        description: "Solo questi ID (es. A0003,A0012). Vuoto = tutti i reel inglesi accettati"
+        required: false
+        default: ""
+      aggiorna:
+        description: "Rimetti nel portale il file per Instagram al posto di quello vecchio"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  esporta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt && sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq ffmpeg >/dev/null
+      - name: Esporta
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          IDS: ${{ inputs.ids }}
+          AGGIORNA: ${{ inputs.aggiorna }}
+        run: python esporta_inglese.py
+      - name: Release in bozza
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="inglese-${{ github.run_id }}"
+          gh release create "$tag" fuori/* --draft --title "Reel inglesi per Instagram (${{ github.run_id }})" --notes "Bozza privata, da cancellare dopo lo scarico."
