@@ -81,6 +81,11 @@ class PortalStorage:
         v = r.get("ora")
         return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else None
 
+    def modificato(self, ref: str) -> str | None:
+        """ultima modifica di Power dalle Uscite (titolo, descrizione, copertina; 26/11 21:03): se cambia, il post si rifà"""
+        r = self._rows.get(ref) or (self.db.get("pub_consegne", select="modificato_at", id=f"eq.{ref}") or [{}])[0]
+        return r.get("modificato_at") or None
+
     def list_files(self, ref: str) -> dict[str, FileRef]:
         r = self._rows.get(ref) or self.db.get("pub_consegne", select="*", id=f"eq.{ref}")[0]
         out = {f["nome"]: FileRef(f["nome"], f["path"], int(f.get("bytes") or 0)) for f in r.get("files", [])}
@@ -227,6 +232,10 @@ class MultiStorage:
     def orario(self, ref):
         s, raw = self._split(ref)
         return s.orario(raw) if hasattr(s, "orario") else None
+
+    def modificato(self, ref):
+        s, raw = self._split(ref)
+        return s.modificato(raw) if hasattr(s, "modificato") else None
 
 
 class Portale:

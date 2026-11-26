@@ -213,6 +213,8 @@ class Publisher:
             parse_ids(self._local_file(files["ID.txt"]).read_text(encoding="utf-8", errors="replace"), jobs)
         state = self.storage.read_state(pkg_ref)
         ora = self.storage.orario(pkg_ref) if hasattr(self.storage, "orario") else None
+        # Power, 26/11 21:03: «devo poter modificare tutto, e di conseguenza anche Blotato in automatico»
+        mod = self.storage.modificato(pkg_ref) if hasattr(self.storage, "modificato") else None
         # Power, 26/11 17:15: «rendimi tutto manuale per ora»: una consegna del portale esce solo quando Power le ha dato
         # giorno e ora in Uscite. Senza, aspetta (niente stato, niente Blotato).
         if (self.cfg.get("collocazione_manuale") and not solo_nuovi and ora is None and pkg_ref.startswith("portale::")):
@@ -254,16 +256,18 @@ class Publisher:
                     nuovo = self.quando(pkg_date, acc, job.slot, ora)[0].strftime("%Y%m%d%H%M")
                 except Exception:
                     nuovo = prev["quando"]
-                if nuovo != prev["quando"]:
+                modificato = (prev.get("mod") or None) != (mod or None)
+                if nuovo != prev["quando"] or modificato:
                     if self.api.dry_run:
-                        log(f"   {job.key:<20} prova: spostato dal {prev['quando']} al {nuovo}")
+                        log(f"   {job.key:<20} prova: {'modificato' if modificato else 'spostato'} ({prev['quando']} → {nuovo})")
                         continue
                     vecchi = [x for x in self._programmati()
                               if str((x.get("account") or {}).get("id") or (x.get("draft") or {}).get("accountId")) == str(acc.get("blotato_id"))
                               and (x.get("scheduledAt") or "").replace("-", "").replace("T", "").replace(":", "")[:12] == prev["quando"]]
                     for x in vecchi:
                         self.api.delete_schedule(x["id"])
-                    log(f"   {job.key:<20} spostato: {'cancellato su Blotato il post' if vecchi else 'non trovato su Blotato il post'} "
+                    log(f"   {job.key:<20} {'modificato da Power' if modificato else 'spostato'}: "
+                        f"{'cancellato su Blotato il post' if vecchi else 'non trovato su Blotato il post'} "
                         f"delle {prev.get('orario', prev['quando'])}, lo riprogrammo")
                     prev = {}
             if prev.get("stato") in DONE and not (self.riprendibile(prev) and not fermo):
@@ -282,7 +286,7 @@ class Publisher:
                         f"(oltre {limite} min): non lo pubblico adesso, il portale lo rimette nel primo posto libero")
                     self.troppo_tardi += 1
                     continue
-            rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat(), "cid": job.cid}
+            rec = {"file": job.source, "account": job.account, "aggiornato": self.now.isoformat(), "cid": job.cid, "mod": mod}
             try:
                 if fermo:
                     rec.update(stato="saltato", motivo=fermo)
