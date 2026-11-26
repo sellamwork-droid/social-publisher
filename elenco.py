@@ -41,6 +41,13 @@ def main() -> None:
         r = supa.s.post(f"{supa.url}/rest/v1/rpc/pub_colloca", timeout=60,
                         json={"consegna": "00000000-0000-0000-0000-000000000000", "quando": "2030-01-01T10:00:00Z"})
         print(f"\nFUNZIONE pub_colloca: {r.status_code} {r.text[:160]}")
+        oggi = date.today().isoformat()
+        print(f"\nUSCITE DA OGGI ({oggi})")
+        for p in sorted(supa.get("pub_post", select="uscita,ora_uscita,account,contenuto_id,lingua,stato,motivo", uscita=f"gte.{oggi}"),
+                        key=lambda x: x.get("ora_uscita") or ""):
+            print(f"  {p['uscita']} {str(p.get('ora_uscita') or '')[11:16]}Z {p['account']:<26} {p['contenuto_id']:<6} {p['lingua']} {p['stato']:<11} {p.get('motivo','')[:80]}")
+        for c in supa.get("pub_consegne", select="contenuto_id,lingua,stato,uscita,ora", stato="eq.confermato"):
+            print(f"  CONFERMATO {c['contenuto_id']} {c['lingua']} uscita {c['uscita']} ora {c.get('ora')}")
         stampa_chat(supa)
 
     mostra = [x.strip() for x in os.environ.get("MOSTRA", "").split(",") if x.strip()]
