@@ -13,6 +13,10 @@ on:
         description: "Mostra anche lo stato delle chat e i loro ultimi messaggi"
         type: boolean
         default: false
+      copertina:
+        description: "Copertina da vedere (ID:LINGUA, es. A0010:EN)"
+        required: false
+        default: ""
       qualita:
         description: "Misura risoluzione e bitrate dei video in uscita"
         type: boolean
@@ -38,6 +42,7 @@ jobs:
           MOSTRA: ${{ inputs.mostra }}
           CHAT: ${{ inputs.chat }}
           QUALITA: ${{ inputs.qualita }}
+          COPERTINA: ${{ inputs.copertina }}
         run: python elenco.py
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.mostra != '' }}

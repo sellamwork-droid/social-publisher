@@ -1,0 +1,34 @@
+name: Togli una consegna
+
+# Power, 26/11 19:51: toglie dal portale una consegna non ancora uscita (es. A0010 inglese ricompresso, da rifare).
+on:
+  workflow_dispatch:
+    inputs:
+      togli:
+        description: "ID:LINGUA (es. A0010:EN)"
+        required: true
+      motivo:
+        description: "Perché (si vede nel portale)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  togli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Togli
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TOGLI: ${{ inputs.togli }}
+          MOTIVO: ${{ inputs.motivo }}
+        run: python togli.py

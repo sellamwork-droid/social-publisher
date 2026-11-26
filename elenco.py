@@ -35,6 +35,25 @@ def main() -> None:
             f"confermata {str(r.get('confermato_at') or r.get('aggiornato') or '')[:16]}",
         ]))
 
+    cop = os.environ.get("COPERTINA", "").strip()
+    if cop:
+        # la copertina di un contenuto, nel log in base64 (gli artifact non si scaricano da dove lavora Claude): «ID:LINGUA»
+        import base64, io, tempfile
+        from PIL import Image
+        cid, _, lin = cop.partition(":")
+        righe = [r for r in supa.get("pub_consegne", select="contenuto_id,lingua,stato,files,created_at", contenuto_id=f"eq.{cid}",
+                                     lingua=f"eq.{lin or 'IT'}") if r["stato"] != "annullato"]
+        c = sorted(righe, key=lambda r: r["created_at"])[-1] if righe else None
+        f = next((x for x in (c or {}).get("files", []) if "_cover." in x["nome"].lower()), None)
+        if f:
+            d = Path(tempfile.mkdtemp()) / f["nome"]
+            supa.download(f["path"], d)
+            buf = io.BytesIO()
+            Image.open(d).convert("RGB").save(buf, "JPEG", quality=90)
+            print(f"COPERTINA {cid} {lin} {c['stato']} {f['nome']}")
+            print("COVERB64:" + base64.b64encode(buf.getvalue()).decode())
+        else:
+            print(f"COPERTINA {cid} {lin}: non trovata")
     if os.environ.get("QUALITA") == "true":
         # qualità dei file che escono (Power, 26/11 19:26): risoluzione, bitrate e peso dei video in uscita da oggi
         import json as _j, subprocess, tempfile
