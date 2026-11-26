@@ -36,6 +36,11 @@ def main() -> None:
         ]))
 
     if os.environ.get("CHAT") == "true":
+        # il portale ha la funzione «sposta uscita»? (si chiama con un id inesistente: risponde «non autorizzato» o «non trovata»
+        # se c'è, «Could not find the function» se il database non è ancora aggiornato; non cambia niente)
+        r = supa.s.post(f"{supa.url}/rest/v1/rpc/pub_sposta_uscita", timeout=60,
+                        json={"consegna": "00000000-0000-0000-0000-000000000000", "giorno": date.today().isoformat()})
+        print(f"\nFUNZIONE pub_sposta_uscita: {r.status_code} {r.text[:160]}")
         stampa_chat(supa)
 
     mostra = [x.strip() for x in os.environ.get("MOSTRA", "").split(",") if x.strip()]
