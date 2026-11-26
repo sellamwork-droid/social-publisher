@@ -35,6 +35,9 @@ def main() -> None:
             f"confermata {str(r.get('confermato_at') or r.get('aggiornato') or '')[:16]}",
         ]))
 
+    if os.environ.get("CHAT") == "true":
+        stampa_chat(supa)
+
     mostra = [x.strip() for x in os.environ.get("MOSTRA", "").split(",") if x.strip()]
     if not mostra:
         return
@@ -55,6 +58,23 @@ def main() -> None:
             except Exception as e:  # un file che non c'è più non ferma gli altri
                 print(f"{cid}: {f.get('nome')} non scaricato ({str(e)[:120]})")
         print(f"{cid}: {len(list(d.iterdir()))} file in {d.name} (titolo: {r.get('titolo')})")
+
+
+def stampa_chat(supa) -> None:
+    """Power, 26/11 15:21: «perché non va nulla?». Stato di ogni chat e gli ultimi messaggi di sistema e di Claude."""
+    print("\nCHAT")
+    chats = supa.get("pub_chats", select="*")
+    chats.sort(key=lambda c: (c.get("brand") or "", c.get("id") or ""))
+    msgs = supa.get("pub_messages", select="chat_id,autore,stato,created_at,testo", order="created_at.desc", limit="400")
+    for c in chats:
+        print(f"- {c.get('id')} | {c.get('stato')} | {(c.get('attivita') or '')[:160]} | lavoro su: {(c.get('lavoro_su') or '')[:80]}")
+        suoi = [m for m in msgs if m.get("chat_id") == c.get("id")][:6]
+        for m in suoi:
+            testo = " ".join(str(m.get("testo") or "").split())
+            print(f"      {str(m.get('created_at'))[:16]} {m.get('autore')}/{m.get('stato')}: {testo[:260]}")
+    print("\nSISTEMA")
+    for r in supa.get("pub_sistema", select="*"):
+        print(" ", str(r)[:400])
 
 
 if __name__ == "__main__":
