@@ -55,8 +55,7 @@ brands:
         slots: {carosello: "09:00", reel1: "12:00", reel2: "18:00", reel3: "21:00", storia1: "08:30", storia2: "13:30", storia3: "20:00"}
       tiktok:
         platform: tiktok
-        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
-        dal: "2026-11-26"          # Power, 25/11 00:15: «i tik tok italiani vanno usati per lingua ita per ora»: contenuti italiani, dal 26 novembre
+        dal: "2026-11-27"          # Power, 26/11 22:22: «attiva i TikTok italiani e mettili già i programmati da domani» (contenuti italiani, stesso orario di Instagram italiano)
         blotato_id: "70653"        # @axux.official (TikTok, per ora in italiano)
         nome: "TikTok @axux.official"
         timezone: Europe/Rome
@@ -86,8 +85,7 @@ brands:
         slots: {carosello: "09:30", reel1: "12:30", reel2: "18:30", reel3: "21:30", storia1: "09:00", storia2: "14:00", storia3: "20:30"}
       tiktok:
         platform: tiktok
-        paused: true               # Power, 26/11 16:47: in automatico solo Instagram italiano e YouTube inglese; qui per ora pubblica lui a mano (scarica dal portale)
-        dal: "2026-11-26"          # Power, 25/11 00:15: «i tik tok italiani vanno usati per lingua ita per ora»: contenuti italiani, dal 26 novembre
+        dal: "2026-11-27"          # Power, 26/11 22:22: «attiva i TikTok italiani e mettili già i programmati da domani» (contenuti italiani, stesso orario di Instagram italiano)
         blotato_id: "66374"        # @volwick.official (TikTok, per ora in italiano)
         nome: "TikTok @volwick.official"
         timezone: Europe/Rome

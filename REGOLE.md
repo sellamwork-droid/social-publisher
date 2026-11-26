@@ -147,3 +147,6 @@ Le chat esportano ogni reel già così con esporta_ig.py (Power, 26/11 20:13: «
 
 ## Modifiche dalle Uscite (Power, 26/11 21:03: «devo poter modificare tutto, e di conseguenza anche Blotato in automatico»)
 Nel portale, in Uscite, Power cambia giorno e ora, titolo, descrizione e copertina. Ogni modifica segna `modificato_at` sulla consegna e la rimette «confermato» con la sua ora: al giro dopo (entro 15 minuti) social-publisher vede che `modificato_at` è diverso da quello del post già su Blotato, cancella il post vecchio e lo riprogramma con i file e la descrizione nuovi. Un contenuto già uscito su un account non si modifica più.
+
+## TikTok italiani attivi (Power, 26/11 22:22: «attiva i TikTok italiani e mettili già i programmati da domani»)
+Dalle uscite del 27/11 TikTok @axux.official e @volwick.official escono in automatico, come Instagram italiano: stessi contenuti italiani (reel e caroselli), stesso giorno e ora scelti da Power in Uscite. Le consegne già programmate dal 27 in poi ricevono il loro post TikTok al giro successivo, senza rifare quelli di Instagram. Restano a mano solo Instagram USA (@axux.officiall, @volwick.officiall).
