@@ -1,0 +1,30 @@
+name: Piano · chat insieme
+
+# Power, 26/11 16:08: «cambia te il piano a 4». Cambia solo il numero di chat che lavorano insieme nel Piano del portale.
+on:
+  workflow_dispatch:
+    inputs:
+      parallele:
+        description: "Quante chat insieme (1-8)"
+        required: true
+        default: "4"
+
+permissions:
+  contents: read
+
+jobs:
+  piano:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q -r requirements.txt
+      - name: Piano
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PARALLELE: ${{ inputs.parallele }}
+        run: python piano.py
